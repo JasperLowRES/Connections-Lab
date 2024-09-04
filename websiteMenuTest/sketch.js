@@ -81,6 +81,24 @@ function drawMindMap() {
   });
 }
 
+function mouseClicked() {
+  sections.forEach((section, index) => {
+    let angle = PI - (PI / (sections.length - 1)) * index;
+    let x = centerX + radiusX * cos(angle);
+    let y = curveHeight + radiusY * sin(angle) + 40;
+    if (dist(mouseX, mouseY, x, y) < 20) {
+      section.isVisible = !section.isVisible;  // Toggle visibility
+      if (section.isVisible) {
+        // Start opening animation
+        section.branchAnimProgress = 0; // Ensure we start the animation from the beginning
+      } else {
+        // Start closing animation
+        section.branchAnimProgress = 1; // Ensure we start the reverse animation from the end
+      }
+    }
+  });
+}
+
 function animateSubBranches(x, y, section) {
   section.branches.forEach((branch, idx) => {
     let subX = x + section.branchAnimProgress * 100 * cos(idx * 0.5);
@@ -94,23 +112,13 @@ function animateSubBranches(x, y, section) {
 }
 
 function updateAnimationProgress(section) {
-  if (section.isVisible && section.branchAnimProgress < 1) {
-    section.branchAnimProgress += 0.05;  // Increment the progress for opening animation
-  } else if (!section.isVisible && section.branchAnimProgress > 0) {
-    section.branchAnimProgress -= 0.05;  // Decrement the progress for closing animation
+  if (section.branchAnimProgress < 1 && section.isVisible) {
+    section.branchAnimProgress += 0.05; // Increment the progress for opening animation
+  } else if (section.branchAnimProgress > 0 && !section.isVisible) {
+    section.branchAnimProgress -= 0.05; // Decrement the progress for closing animation
   }
 }
 
-function mouseClicked() {
-  sections.forEach((section, index) => {
-    let angle = PI - (PI / (sections.length - 1)) * index;
-    let x = centerX + radiusX * cos(angle);
-    let y = curveHeight + radiusY * sin(angle) + 40;
-    if (dist(mouseX, mouseY, x, y) < 20) {
-      section.isVisible = !section.isVisible;  // Toggle the visibility of the section
-    }
-  });
-}
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
