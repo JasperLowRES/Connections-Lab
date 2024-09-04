@@ -105,47 +105,51 @@ function drawMindMap() {
   });
 }
 
-function animateSubBranches(x, y, section) {
-  section.branches.forEach((branch, idx) => {
-    let subX = x + section.branchAnimProgress * 100 * cos(idx * 0.5);
-    let subY = y + section.branchAnimProgress * 100 * sin(idx * 0.5);
-
-    // Drawing the spline
-    stroke(0);
-    connectTextWithSpline(x, y, subX, subY, [0, 0, 0]);
-
-    // Drawing the text
-    fill(0);
-    noStroke();
-    text(branch, subX, subY);
-  });
-
-  updateAnimationProgress(section);
-}
-
-function updateAnimationProgress(section) {
-  // Only update progress if it's not complete
-  if (section.isVisible && section.branchAnimProgress < 1) {
-    section.branchAnimProgress += 0.05;  // Increment progress for opening
-  } else if (!section.isVisible && section.branchAnimProgress > 0) {
-    section.branchAnimProgress -= 0.05;  // Decrement progress for closing
-  }
-}
-
 function mouseClicked() {
   sections.forEach((section, index) => {
     let angle = PI - (PI / (sections.length - 1)) * index;
     let x = centerX + radiusX * cos(angle);
     let y = curveHeight + radiusY * sin(angle) + 40;
     if (dist(mouseX, mouseY, x, y) < 20) {
-      section.isVisible = !section.isVisible;  // Toggle visibility
+      section.isVisible = !section.isVisible; // Toggle visibility
+      console.log("Section toggled:", section.name, "isVisible:", section.isVisible);
+
+      // Explicitly control animation direction
       if (section.isVisible) {
-        section.branchAnimProgress = 0; // Start animation
+        section.branchAnimProgress = 0; // Start animation from the beginning
+        console.log("Starting animation for:", section.name);
       } else {
-        section.branchAnimProgress = 1; // Prepare to reverse animation
+        section.branchAnimProgress = 1; // Reset to reverse animation
+        console.log("Reversing animation for:", section.name);
       }
     }
   });
+}
+
+function animateSubBranches(x, y, section) {
+  section.branches.forEach((branch, idx) => {
+    let subX = x + section.branchAnimProgress * 100 * cos(idx * 0.5);
+    let subY = y + section.branchAnimProgress * 100 * sin(idx * 0.5);
+
+    stroke(0);
+    connectTextWithSpline(x, y, subX, subY, [0, 0, 0]);
+    fill(0);
+    noStroke();
+    text(branch, subX, subY);
+  });
+
+  // Update animation progress with debug logging
+  updateAnimationProgress(section);
+}
+
+function updateAnimationProgress(section) {
+  if (section.isVisible && section.branchAnimProgress < 1) {
+    section.branchAnimProgress += 0.05;
+    console.log("Animating open:", section.name, section.branchAnimProgress);
+  } else if (!section.isVisible && section.branchAnimProgress > 0) {
+    section.branchAnimProgress -= 0.05;
+    console.log("Animating close:", section.name, section.branchAnimProgress);
+  }
 }
 
 function connectTextWithSpline(startX, startY, endX, endY, color) {
