@@ -21,18 +21,26 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(windowWidth, 800);
-  noFill();
-  strokeWeight(1);
+    createCanvas(windowWidth, 800);
+    noFill();
+    strokeWeight(1);
 
-  centerX = width / 2;
-  startY = 20;
-  radiusX = width * 0.3;
-  radiusY = height * 0.33;
-  curveHeight = startY + 50;
+    centerX = width / 2;
+    startY = 20;
+    radiusX = width * 0.3;
+    radiusY = height * 0.33;
+    curveHeight = startY + 50;
 
-  initSections();
+    initSections();
+
+    // Only use touchStarted if touch is supported
+    if ('ontouchstart' in window || navigator.maxTouchPoints) {
+        canvas.addEventListener('touchstart', touchStarted);
+    } else {
+        canvas.addEventListener('mousedown', mouseClicked);
+    }
 }
+
 
 function initSections() {
   sections = [
@@ -239,40 +247,34 @@ function updateAnimationProgress(section) {
 }
 
 function touchStarted() {
-  let touchX = mouseX; // p5.js maps touch coordinates to mouseX and mouseY
-  let touchY = mouseY;
-
-  sections.forEach((section, index) => {
-    let angle = PI - (PI / (sections.length - 1)) * index;
-    let x = centerX + radiusX * cos(angle);
-    let y = curveHeight + 30 + radiusY * sin(angle) + 70; // Position of the interactive indicator
-
-    // Increase the detection radius for touch input for better responsiveness
-    if (dist(touchX, touchY, x, y) < 40) { // You might need to adjust this value based on your layout
-      section.isVisible = !section.isVisible;
-      // Reset the animation progress when toggling visibility
-      if (section.isVisible) {
-        section.branchAnimProgress = 0; // Start animation
-      } else {
-        section.branchAnimProgress = 1; // Start reverse animation
-      }
-    }
-  });
-
-  // Return false to prevent default behavior and propagation of the touch event
-  return false;
+    let touchX = mouseX; // p5.js maps touch coordinates to mouseX and mouseY
+    let touchY = mouseY;
+    handleInteraction(touchX, touchY);
+    return false; // Prevent default behavior and stop propagation
 }
 
 function mouseClicked() {
-  sections.forEach((section, index) => {
-    let angle = PI - (PI / (sections.length - 1)) * index;
-    let x = centerX + radiusX * cos(angle);
-    let y = curveHeight + 30 + radiusY * sin(angle) + 30;
-    if (dist(mouseX, mouseY, x, y + 70) < 40) {
-      section.isVisible = !section.isVisible; // Toggle visibility
-    }
-  });
+    handleInteraction(mouseX, mouseY);
 }
+
+function handleInteraction(x, y) {
+    sections.forEach((section, index) => {
+        let angle = PI - (PI / (sections.length - 1)) * index;
+        let branchX = centerX + radiusX * cos(angle);
+        let branchY = curveHeight + 30 + radiusY * sin(angle) + 70; // Adjust if needed
+
+        if (dist(x, y, branchX, branchY) < 40) {
+            section.isVisible = !section.isVisible;
+            // Reset the animation progress when toggling visibility
+            if (section.isVisible && section.branchAnimProgress <= 0) {
+                section.branchAnimProgress = 0; // Start animation
+            } else if (!section.isVisible && section.branchAnimProgress >= 1) {
+                section.branchAnimProgress = 1; // Start reverse animation
+            }
+        }
+    });
+}
+
 
 function connectTextWithSpline(startX, startY, endX, endY, color) {
   strokeWeight(.7)
