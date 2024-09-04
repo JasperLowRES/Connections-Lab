@@ -76,36 +76,56 @@ function drawMindMap() {
   });
 }
 
-function animateSubBranches(x, y, section) {
-  section.branches.forEach((branch, idx) => {
-    let subX = x + section.branchAnimProgress * 100 * cos(idx * 0.5);
-    let subY = y + section.branchAnimProgress * 100 * sin(idx * 0.5);
-
-    stroke(0);
-    connectTextWithSpline(x, y, subX, subY, [0, 0, 0]);
-
-    let alpha = map(Math.abs(section.branchAnimProgress), 0, 1, 0, 255);
-    fill(255, alpha);
-    rect(subX - 50, subY - 10, 100, 20, 5);
-
-    fill(0, alpha);
-    text(branch, subX, subY);
-  });
-
-  updateAnimationProgress(section);
-}
-
 function mouseClicked() {
-  sections.forEach((section, index) => {
-    let angle = PI - (PI / (sections.length - 1)) * index;
-    let x = centerX + radiusX * cos(angle);
-    let y = curveHeight + 30 + radiusY * sin(angle) + 70;
-    if (dist(mouseX, mouseY, x, y) < 50) {
-      section.isVisible = !section.isVisible;
-      section.branchAnimProgress = section.isVisible ? 0 : 1;
-    }
-  });
+    sections.forEach((section, index) => {
+        let angle = PI - (PI / (sections.length - 1)) * index;
+        let x = centerX + radiusX * cos(angle);
+        let y = curveHeight + 30 + radiusY * sin(angle) + 70; // Position of the interactive indicator
+
+        // Check distance to toggle visibility
+        if (dist(mouseX, mouseY, x, y) < 50) {
+            // Toggle visibility
+            section.isVisible = !section.isVisible;
+
+            // Reset the animation progress based on visibility state
+            if (section.isVisible) {
+                section.branchAnimProgress = 0; // Start the animation
+            } else {
+                section.branchAnimProgress = 1; // Start reverse animation
+            }
+        }
+    });
 }
+
+function animateSubBranches(x, y, section) {
+    section.branches.forEach((branch, idx) => {
+        let subX = x + section.branchAnimProgress * 100 * cos(idx * 0.5);
+        let subY = y + section.branchAnimProgress * 100 * sin(idx * 0.5);
+
+        stroke(0);
+        connectTextWithSpline(x, y, subX, subY, [0, 0, 0]);
+
+        let alpha = map(Math.abs(section.branchAnimProgress), 0, 1, 0, 255);
+        fill(255, alpha);
+        rect(subX - 50, subY - 10, 100, 20, 5);
+
+        fill(0, alpha);
+        text(branch, subX, subY);
+    });
+
+    // Update animation progress
+    updateAnimationProgress(section);
+}
+
+function updateAnimationProgress(section) {
+    // Adjust the animation progress based on whether the section is visible or not
+    if (section.isVisible && section.branchAnimProgress < 1) {
+        section.branchAnimProgress += 0.05; // Animate opening
+    } else if (!section.isVisible && section.branchAnimProgress > 0) {
+        section.branchAnimProgress -= 0.05; // Animate closing
+    }
+}
+
 
 function connectTextWithSpline(startX, startY, endX, endY, color) {
   strokeWeight(0.5);
@@ -117,13 +137,6 @@ function connectTextWithSpline(startX, startY, endX, endY, color) {
   endShape();
 }
 
-function updateAnimationProgress(section) {
-  if (section.isVisible && section.branchAnimProgress < 1) {
-    section.branchAnimProgress += 0.05;
-  } else if (!section.isVisible && section.branchAnimProgress > 0) {
-    section.branchAnimProgress -= 0.05;
-  }
-}
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
