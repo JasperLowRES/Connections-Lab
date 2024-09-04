@@ -6,18 +6,10 @@ let sections; // Sections with branches
 let centerX, startY, radiusX, radiusY, curveHeight;
 
 function preload() {
-  customFont = loadFont(
-    "https://freight.cargo.site/m/M1931740871943339817553035498010/JetBrainsMono-Medium.ttf"
-  );
-  jaeceLogo = loadImage(
-    "https://freight.cargo.site/t/original/i/Q1931638595870837774536184402458/jaeceYtlogonotext.png"
-  );
-  xtsuiLogo = loadImage(
-    "https://freight.cargo.site/t/original/i/I1931638595852391030462474850842/portfoliologo1.png"
-  );
-  purgeFilesLogo = loadImage(
-    "https://freight.cargo.site/t/original/i/J1931638799928720717911244378650/purgeFileslogodraft1.png"
-  );
+  customFont = loadFont("https://freight.cargo.site/m/M1931740871943339817553035498010/JetBrainsMono-Medium.ttf");
+  jaeceLogo = loadImage("https://freight.cargo.site/t/original/i/Q1931638595870837774536184402458/jaeceYtlogonotext.png");
+  xtsuiLogo = loadImage("https://freight.cargo.site/t/original/i/I1931638595852391030462474850842/portfoliologo1.png");
+  purgeFilesLogo = loadImage("https://freight.cargo.site/t/original/i/J1931638799928720717911244378650/purgeFileslogodraft1.png");
 }
 
 function setup() {
@@ -36,78 +28,19 @@ function setup() {
 
 function initSections() {
   sections = [
-    {
-      name: "purgeFiles",
-      logo: purgeFilesLogo,
-      branches: ["archives", "youtube"],
-      isVisible: false,
-      branchAnimProgress: 0,
-      angles: [PI / 27, PI / 1.5],
-      distances: windowWidth > 800 ? [-80, 50] : [-50, 50],
-    },
-    {
-      name: "jæce",
-      logo: jaeceLogo,
-      branches: ["live/bookings", "releases", "links"],
-      isVisible: false,
-      branchAnimProgress: 0,
-      angles: [PI / 30, PI / 1.2, PI / 1.7],
-      distances: [-50, 80, 70],
-    },
-    {
-      name: "xtsui",
-      logo: xtsuiLogo,
-      branches: ["xtsuimart", "archives"],
-      isVisible: false,
-      branchAnimProgress: 0,
-      angles: [PI / 4, PI / 1.5],
-      distances: [80, 66],
-    },
-    {
-      name: "blog",
-      logo: null,
-      branches: [],
-      isVisible: false,
-      branchAnimProgress: 0,
-    },
-    {
-      name: "shop",
-      logo: null,
-      branches: [],
-      isVisible: false,
-      branchAnimProgress: 0,
-    },
-    {
-      name: "contact",
-      logo: null,
-      branches: ["email", "instagram", "youtube", "newsletter"],
-      isVisible: false,
-      branchAnimProgress: 0,
-      angles: [PI / 30, PI / 4.5, (3 * PI) / 8, PI / 1.9],
-      distances: [50, 70, 100, 120],
-    },
-    {
-      name: "work",
-      logo: null,
-      branches: ["portfolio", "cv", "commissions"],
-      isVisible: false,
-      branchAnimProgress: 0,
-      angles: [PI / 30, PI / 3.7, PI / 2.5],
-      distances: windowWidth > 800 ? [70, 70, 90] : [50, 50, 70],
-    },
+    { name: "purgeFiles", logo: purgeFilesLogo, branches: ["archives", "youtube"], isVisible: false, branchAnimProgress: 0 },
+    { name: "jæce", logo: jaeceLogo, branches: ["live/bookings", "releases", "links"], isVisible: false, branchAnimProgress: 0 },
+    { name: "xtsui", logo: xtsuiLogo, branches: ["xtsuimart", "archives"], isVisible: false, branchAnimProgress: 0 },
+    { name: "blog", logo: null, branches: [], isVisible: false, branchAnimProgress: 0 },
+    { name: "shop", logo: null, branches: [], isVisible: false, branchAnimProgress: 0 },
+    { name: "contact", logo: null, branches: ["email", "instagram", "youtube", "newsletter"], isVisible: false, branchAnimProgress: 0 },
+    { name: "work", logo: null, branches: ["portfolio", "cv", "commissions"], isVisible: false, branchAnimProgress: 0 }
   ];
 }
 
 function draw() {
   background(255);
   drawMindMap();
-  sections.forEach(section => {
-    if (section.isVisible && section.branchAnimProgress < 1) {
-      section.branchAnimProgress += 0.05;
-    } else if (!section.isVisible && section.branchAnimProgress > 0) {
-      section.branchAnimProgress -= 0.05;
-    }
-  });
 }
 
 function drawMindMap() {
@@ -115,119 +48,74 @@ function drawMindMap() {
   noStroke();
   textAlign(CENTER, CENTER);
   textFont(customFont, 12);
-  
+
+  // Display main text "jasper hall"
   let mainText = "jasper hall";
-  let mainTextWidth = textWidth(mainText) + 20;
-  let mainTextHeight = 20;
-
-  let mainTextX = centerX;
-  let mainTextY = startY + mainTextHeight / 2;
-
-  fill(255);
-  stroke(0);
-  strokeWeight(1);
-  rect(mainTextX - mainTextWidth / 2, mainTextY - mainTextHeight / 2, mainTextWidth, mainTextHeight, 10);
-
-  fill(0);
-  noStroke();
-  text(mainText, mainTextX, mainTextY-2);
+  text(mainText, centerX, startY);
 
   sections.forEach((section, index) => {
     let angle = PI - (PI / (sections.length - 1)) * index;
-    let movement = sin(frameCount * 0.02 + index) * 3;
-    let x = centerX + radiusX * cos(angle) + movement;
-    let y = curveHeight + 30 + radiusY * sin(angle) + movement;
+    let x = centerX + radiusX * cos(angle);
+    let y = curveHeight + radiusY * sin(angle);
 
-    connectTextWithSpline(centerX, startY + 20, x, y, [0, 0, 0]);
+    // Draw the connection line
+    stroke(0);
+    line(centerX, startY, x, y);
 
+    // Display logos if available
     if (section.logo) {
-      imageMode(CENTER);
-      image(section.logo, x, y + 30, 50, 50);
+      image(section.logo, x, y - 30, 50, 50);
     }
 
     fill(0);
-    text(section.name, x, y + 50);
+    noStroke();
+    text(section.name, x, y + 20);
 
-    if (section.branches.length > 0) {
-      strokeWeight(0.5);
-      stroke(0, 0 + 128 * sin(millis() / 1000));
-      fill(200, 200, 150, 200 + 128 * sin(millis() / 1000));
-
-      ellipse(x, y + 70, 6, 6);
-    }
+    // Interactive indicator
+    fill(200, 200, 150, 200);
+    ellipse(x, y + 40, 10, 10);
 
     if (section.isVisible || section.branchAnimProgress > 0) {
-      animateSubBranches(x, y + 70, section);
+      animateSubBranches(x, y + 40, section);
     }
   });
 }
 
 function animateSubBranches(x, y, section) {
   section.branches.forEach((branch, idx) => {
-    let subX = x + section.branchAnimProgress * section.distances[idx] * cos(section.angles[idx]);
-    let subY = y + section.branchAnimProgress * section.distances[idx] * sin(section.angles[idx]);
+    let subX = x + section.branchAnimProgress * 100 * cos(idx * 0.5);
+    let subY = y + section.branchAnimProgress * 100 * sin(idx * 0.5);
 
-    textFont(customFont, 8);
-    let textW = textWidth(branch) + 10;
-    let textH = 20;
-
-    let alpha = map(Math.abs(section.branchAnimProgress), 0, 1, 0, 255);
-
-    stroke(0, alpha);
-    connectTextWithSpline(x, y, subX, subY, [0, 0, 0]);
-
-    if (section.branchAnimProgress >= 1) {
-      if (dist(mouseX, mouseY, subX, subY) < textW / 2) {
-        fill(220, 220, 255, alpha);
-        cursor(HAND);
-      } else {
-        fill(255, alpha);
-        cursor(ARROW);
-      }
-    } else {
-      fill(255, alpha);
-      cursor(ARROW);
-    }
-
-    rect(subX - textW / 2, subY - textH / 2, textW, textH, 10);
-
-    fill(0, alpha);
-    noStroke();
+    fill(0);
     text(branch, subX, subY);
   });
+
+  updateAnimationProgress(section);
 }
 
-function connectTextWithSpline(startX, startY, endX, endY, color) {
-  stroke(color[0], color[1], color[2]);
-  noFill();
-  beginShape();
-  vertex(startX, startY);
-  bezierVertex(startX, endY + (startY - endY) / 2, endX, startY + (endY - startY) / 2, endX, endY);
-  endShape();
+function updateAnimationProgress(section) {
+  if (section.isVisible && section.branchAnimProgress < 1) {
+    section.branchAnimProgress += 0.05;  // Increment the progress for opening animation
+  } else if (!section.isVisible && section.branchAnimProgress > 0) {
+    section.branchAnimProgress -= 0.05;  // Decrement the progress for closing animation
+  }
 }
 
 function mouseClicked() {
   sections.forEach((section, index) => {
     let angle = PI - (PI / (sections.length - 1)) * index;
     let x = centerX + radiusX * cos(angle);
-    let y = curveHeight + 30 + radiusY * sin(angle) + 70; // Adding 70 to align with interactive indicators
-    if (dist(mouseX, mouseY, x, y) < 40) {
-      section.isVisible = !section.isVisible; // Toggle visibility
-      if (section.isVisible) {
-        section.branchAnimProgress = 0; // Reset animation progress when opening
-      } else {
-        section.branchAnimProgress = 1; // Set progress to full when closing, to ensure reverse animation
-      }
+    let y = curveHeight + radiusY * sin(angle) + 40;
+    if (dist(mouseX, mouseY, x, y) < 20) {
+      section.isVisible = !section.isVisible;  // Toggle the visibility of the section
     }
   });
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  centerX = width / 2; // Recalculate center based on new window size
-  // Adjust radius based on new dimensions
-  radiusX = width * 0.3;
-  radiusY = height * 0.33;
-  initSections(); // Reinitialize sections to adjust for new window dimensions
+  centerX = width / 2;  // Update the center based on the new dimensions
+  radiusX = width * 0.3;  // Adjust the radius based on the new width
+  radiusY = height * 0.33;  // Adjust the radius based on the new height
+  initSections();  // Reinitialize the sections to update any dependent calculations
 }
-
