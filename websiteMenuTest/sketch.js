@@ -216,12 +216,17 @@ function animateSubBranches(x, y, section) {
 
 
 function updateAnimationProgress(section) {
-  if (section.isVisible && section.branchAnimProgress < 1) {
-    section.branchAnimProgress += 0.05;
-  } else if (!section.isVisible && section.branchAnimProgress > 0) {
-    section.branchAnimProgress -= 0.05;
-  }
+    if (section.isVisible) {
+        if (section.branchAnimProgress < 1) {
+            section.branchAnimProgress += 0.05;
+        }
+    } else {
+        if (section.branchAnimProgress > 0) {
+            section.branchAnimProgress -= 0.05;
+        }
+    }
 }
+
 
 
 
