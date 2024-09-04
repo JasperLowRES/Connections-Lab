@@ -46,7 +46,7 @@ function initSections() {
       distances: windowWidth > 800 ? [-80, 50] : [-50, 50], // Adjusted distances for desktop
     },
     {
-      name: "jæce",
+      name: "jÃ¦ce",
       logo: jaeceLogo,
       branches: ["live/bookings", "releases", "links"],
       isVisible: false,
@@ -172,103 +172,52 @@ function drawMindMap() {
     }
   });
 }
-function animateSubBranches(x, y, section) {
-  section.branches.forEach((branch, idx) => {
-    let subX = x + section.branchAnimProgress * section.distances[idx] * cos(section.angles[idx]);
-    let subY = y + section.branchAnimProgress * section.distances[idx] * sin(section.angles[idx]);
-
-    textFont(customFont, 8); // Ensure smaller font size for subbranch labels
-    let textW = textWidth(branch) + 10; // Additional padding around text
-    let textH = 20; // Fixed height for simplicity
-
-    // Calculate alpha based on animation progress
-    let alpha = map(Math.abs(section.branchAnimProgress), 0, 1, 0, 255);
-
-    // Draw the spline first
-    stroke(0, alpha);
-    connectTextWithSpline(x, y, subX, subY, [0, 0, 0]);
-
-    // Only show interaction effects if animation is complete
-    if (section.branchAnimProgress >= 1) {
-      if (dist(mouseX, mouseY, subX, subY) < textW / 2) {
-        fill(220, 220, 255, alpha); // Lighter fill on hover
-        cursor(HAND);
-      } else {
-        fill(255, alpha); // Normal fill
-        cursor(ARROW);
-      }
-    } else {
-      fill(255, alpha); // Non-interactive fill when animating
-      cursor(ARROW);
-    }
-
-    rect(subX - textW / 2, subY - textH / 2, textW, textH, 10); // Draw rounded rectangle
-
-    // Draw text on top of the rectangle
-    fill(0, alpha);
-    noStroke();
-    textAlign(CENTER, CENTER); // Center text within the rectangle
-    text(branch, subX, subY);
-  });
-
-  updateAnimationProgress(section);
-}
-
-
-function updateAnimationProgress(section) {
-  if (section.isVisible && section.branchAnimProgress < 1) {
-    section.branchAnimProgress += 0.05;
-  } else if (!section.isVisible && section.branchAnimProgress > 0) {
-    section.branchAnimProgress -= 0.05;
-  }
-}
-
-
-
-function updateAnimationProgress(section) {
-  if (section.isVisible && section.branchAnimProgress < 1) {
-    section.branchAnimProgress += 0.05;
-  } else if (!section.isVisible && section.branchAnimProgress > 0) {
-    section.branchAnimProgress -= 0.05;
-  }
-}
-
-function touchStarted() {
-  let touchX = mouseX; // p5.js maps touch coordinates to mouseX and mouseY
-  let touchY = mouseY;
-
-  sections.forEach((section, index) => {
-    let angle = PI - (PI / (sections.length - 1)) * index;
-    let x = centerX + radiusX * cos(angle);
-    let y = curveHeight + 30 + radiusY * sin(angle) + 70; // Position of the interactive indicator
-
-    // Increase the detection radius for touch input for better responsiveness
-    if (dist(touchX, touchY, x, y) < 40) { // You might need to adjust this value based on your layout
-      section.isVisible = !section.isVisible;
-      // Reset the animation progress when toggling visibility
-      if (section.isVisible) {
-        section.branchAnimProgress = 0; // Start animation
-      } else {
-        section.branchAnimProgress = 1; // Start reverse animation
-      }
-    }
-  });
-
-  // Return false to prevent default behavior and propagation of the touch event
-  return false;
-}
-
 function mouseClicked() {
   sections.forEach((section, index) => {
     let angle = PI - (PI / (sections.length - 1)) * index;
     let x = centerX + radiusX * cos(angle);
-    let y = curveHeight + 30 + radiusY * sin(angle) + 30;
-    if (dist(mouseX, mouseY, x, y + 70) < 40) {
+    let y = curveHeight + radiusY * sin(angle) + 40;
+    if (dist(mouseX, mouseY, x, y) < 20) {
       section.isVisible = !section.isVisible; // Toggle visibility
+      console.log("Section toggled:", section.name, "isVisible:", section.isVisible);
+
+      // Explicitly control animation direction
+      if (section.isVisible) {
+        section.branchAnimProgress = 0; // Start animation from the beginning
+        console.log("Starting animation for:", section.name);
+      } else {
+        section.branchAnimProgress = 1; // Reset to reverse animation
+        console.log("Reversing animation for:", section.name);
+      }
     }
   });
 }
 
+function animateSubBranches(x, y, section) {
+  section.branches.forEach((branch, idx) => {
+    let subX = x + section.branchAnimProgress * 100 * cos(idx * 0.5);
+    let subY = y + section.branchAnimProgress * 100 * sin(idx * 0.5);
+
+    stroke(0);
+    connectTextWithSpline(x, y, subX, subY, [0, 0, 0]);
+    fill(0);
+    noStroke();
+    text(branch, subX, subY);
+  });
+
+  // Update animation progress with debug logging
+  updateAnimationProgress(section);
+}
+
+function updateAnimationProgress(section) {
+  if (section.isVisible && section.branchAnimProgress < 1) {
+    section.branchAnimProgress += 0.05;
+    console.log("Animating open:", section.name, section.branchAnimProgress);
+  } else if (!section.isVisible && section.branchAnimProgress > 0) {
+    section.branchAnimProgress -= 0.05;
+    console.log("Animating close:", section.name, section.branchAnimProgress);
+  }
+}
 function connectTextWithSpline(startX, startY, endX, endY, color) {
   strokeWeight(.7)
   stroke(color[0], color[1], color[2]);
