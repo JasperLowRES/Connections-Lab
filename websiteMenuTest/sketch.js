@@ -13,9 +13,10 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(windowWidth, 800);
   noFill();
   strokeWeight(1);
+  textFont(customFont, 12);
 
   centerX = width / 2;
   startY = 20;
@@ -28,13 +29,55 @@ function setup() {
 
 function initSections() {
   sections = [
-    { name: "purgeFiles", logo: purgeFilesLogo, branches: ["archives", "youtube"], isVisible: false, branchAnimProgress: 0 },
-    { name: "jæce", logo: jaeceLogo, branches: ["live/bookings", "releases", "links"], isVisible: false, branchAnimProgress: 0 },
-    { name: "xtsui", logo: xtsuiLogo, branches: ["xtsuimart", "archives"], isVisible: false, branchAnimProgress: 0 },
-    { name: "blog", logo: null, branches: [], isVisible: false, branchAnimProgress: 0 },
-    { name: "shop", logo: null, branches: [], isVisible: false, branchAnimProgress: 0 },
-    { name: "contact", logo: null, branches: ["email", "instagram", "youtube", "newsletter"], isVisible: false, branchAnimProgress: 0 },
-    { name: "work", logo: null, branches: ["portfolio", "cv", "commissions"], isVisible: false, branchAnimProgress: 0 }
+    {
+      name: "purgeFiles",
+      logo: purgeFilesLogo,
+      branches: ["archives", "youtube"],
+      isVisible: false,
+      branchAnimProgress: 0
+    },
+    {
+      name: "jæce",
+      logo: jaeceLogo,
+      branches: ["live/bookings", "releases", "links"],
+      isVisible: false,
+      branchAnimProgress: 0
+    },
+    {
+      name: "xtsui",
+      logo: xtsuiLogo,
+      branches: ["xtsuimart", "archives"],
+      isVisible: false,
+      branchAnimProgress: 0
+    },
+    {
+      name: "blog",
+      logo: null,
+      branches: [],
+      isVisible: false,
+      branchAnimProgress: 0
+    },
+    {
+      name: "shop",
+      logo: null,
+      branches: [],
+      isVisible: false,
+      branchAnimProgress: 0
+    },
+    {
+      name: "contact",
+      logo: null,
+      branches: ["email", "instagram", "youtube", "newsletter"],
+      isVisible: false,
+      branchAnimProgress: 0
+    },
+    {
+      name: "work",
+      logo: null,
+      branches: ["portfolio", "cv", "commissions"],
+      isVisible: false,
+      branchAnimProgress: 0
+    },
   ];
 }
 
@@ -47,38 +90,46 @@ function drawMindMap() {
   fill(0);
   noStroke();
   textAlign(CENTER, CENTER);
-  textFont(customFont, 12);
-
-  // Display main text "jasper hall"
-  let mainText = "jasper hall";
-  text(mainText, centerX, startY);
+  text("jasper hall", centerX, startY);
 
   sections.forEach((section, index) => {
     let angle = PI - (PI / (sections.length - 1)) * index;
     let x = centerX + radiusX * cos(angle);
-    let y = curveHeight + radiusY * sin(angle);
+    let y = curveHeight + radiusY * sin(angle) + 40;
 
-    // Draw the connection line
-    stroke(0);
-    line(centerX, startY, x, y);
-
-    // Display logos if available
-    if (section.logo) {
-      image(section.logo, x, y - 30, 50, 50);
-    }
-
-    fill(0);
-    noStroke();
-    text(section.name, x, y + 20);
-
-    // Interactive indicator
-    fill(200, 200, 150, 200);
-    ellipse(x, y + 40, 10, 10);
+    connectTextWithSpline(centerX, startY + 20, x, y, [0, 0, 0]);
 
     if (section.isVisible || section.branchAnimProgress > 0) {
-      animateSubBranches(x, y + 40, section);
+      animateSubBranches(x, y, section);
     }
   });
+}
+
+function animateSubBranches(x, y, section) {
+  section.branches.forEach((branch, idx) => {
+    let subX = x + section.branchAnimProgress * 100 * cos(idx * 0.5);
+    let subY = y + section.branchAnimProgress * 100 * sin(idx * 0.5);
+
+    // Drawing the spline
+    stroke(0);
+    connectTextWithSpline(x, y, subX, subY, [0, 0, 0]);
+
+    // Drawing the text
+    fill(0);
+    noStroke();
+    text(branch, subX, subY);
+  });
+
+  updateAnimationProgress(section);
+}
+
+function updateAnimationProgress(section) {
+  // Only update progress if it's not complete
+  if (section.isVisible && section.branchAnimProgress < 1) {
+    section.branchAnimProgress += 0.05;  // Increment progress for opening
+  } else if (!section.isVisible && section.branchAnimProgress > 0) {
+    section.branchAnimProgress -= 0.05;  // Decrement progress for closing
+  }
 }
 
 function mouseClicked() {
@@ -89,41 +140,29 @@ function mouseClicked() {
     if (dist(mouseX, mouseY, x, y) < 20) {
       section.isVisible = !section.isVisible;  // Toggle visibility
       if (section.isVisible) {
-        // Start opening animation
-        section.branchAnimProgress = 0; // Ensure we start the animation from the beginning
+        section.branchAnimProgress = 0; // Start animation
       } else {
-        // Start closing animation
-        section.branchAnimProgress = 1; // Ensure we start the reverse animation from the end
+        section.branchAnimProgress = 1; // Prepare to reverse animation
       }
     }
   });
 }
 
-function animateSubBranches(x, y, section) {
-  section.branches.forEach((branch, idx) => {
-    let subX = x + section.branchAnimProgress * 100 * cos(idx * 0.5);
-    let subY = y + section.branchAnimProgress * 100 * sin(idx * 0.5);
-
-    fill(0);
-    text(branch, subX, subY);
-  });
-
-  updateAnimationProgress(section);
+function connectTextWithSpline(startX, startY, endX, endY, color) {
+  stroke(color[0], color[1], color[2]);
+  noFill();
+  beginShape();
+  vertex(startX, startY);
+  bezierVertex(
+    startX, endY + (startY - endY) / 2,
+    endX, startY + (endY - startY) / 2,
+    endX, endY
+  );
+  endShape();
 }
-
-function updateAnimationProgress(section) {
-  if (section.branchAnimProgress < 1 && section.isVisible) {
-    section.branchAnimProgress += 0.05; // Increment the progress for opening animation
-  } else if (section.branchAnimProgress > 0 && !section.isVisible) {
-    section.branchAnimProgress -= 0.05; // Decrement the progress for closing animation
-  }
-}
-
 
 function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-  centerX = width / 2;  // Update the center based on the new dimensions
-  radiusX = width * 0.3;  // Adjust the radius based on the new width
-  radiusY = height * 0.33;  // Adjust the radius based on the new height
-  initSections();  // Reinitialize the sections to update any dependent calculations
+  resizeCanvas(windowWidth, 800);
+  centerX = width / 2;  // Recalculate center based on new window size
+  initSections();  // Reinitialize sections to adjust for new window size
 }
