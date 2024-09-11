@@ -58,7 +58,7 @@ body {
 
 .book-button {
     display: flex;
-    max-width: 300px;
+    max-width: 100px;
     height: auto;
     justify-content: center;
     margin: 20px auto;
