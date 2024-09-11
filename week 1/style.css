@@ -58,8 +58,13 @@ body {
 
 .book-button {
     display: flex;
-    max-width: 100px;
     height: auto;
     justify-content: center;
     margin: 20px auto;
+}
+
+.book-button img {
+    max-width: 200px;
+    height: auto; 
+    cursor: pointer;
 }
