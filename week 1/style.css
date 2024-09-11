@@ -34,7 +34,7 @@ body {
 }
 
 .image-gallery img {
-    height: 200px; 
+    height: 300px; 
     width: auto;
     object-fit: cover;
     flex-shrink: 0;
