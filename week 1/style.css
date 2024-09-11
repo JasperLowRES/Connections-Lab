@@ -7,33 +7,35 @@ body {
 .header-container {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     margin: 20px 0;
 }
 
 .header-container img {
-    height: 200px; /* Set the desired height for all header images */
+    height: 200px;
     width: auto;
-    object-fit: cover; /* Ensures the images scale without distortion */
+    object-fit: cover;
+    flex-shrink: 0; 
 }
 
 .header-text {
-    flex: 1;
+    flex-grow: 1;
     text-align: center;
-    font-size: 100px;
-    padding: 0 30px;
+    font-size: 48px; 
+    padding: 0 20px;
+    margin: 0;
 }
 
 .image-gallery {
     display: flex;
-    gap: 10px; /* Spacing between images */
+    gap: 10px; 
     justify-content: center;
     margin-top: 20px;
 }
 
 .image-gallery img {
-    height: 200px; /* Set consistent height for gallery images */
+    height: 200px; 
     width: auto;
-    object-fit: cover; /* Ensures images maintain their aspect ratio */
+    object-fit: cover;
     flex-shrink: 0;
 }
