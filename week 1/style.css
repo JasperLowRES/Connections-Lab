@@ -58,3 +58,9 @@ body {
     object-fit: cover;
     flex-shrink: 0;
 }
+
+.book-button {
+    height: auto;
+    width: auto;
+    flex: 1;
+}
