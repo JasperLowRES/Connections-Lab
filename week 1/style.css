@@ -60,7 +60,8 @@ body {
 }
 
 .book-button {
+    display: flex;
+    margin: 20px auto;
     height: auto;
     width: auto;
-    flex: 1;
 }
