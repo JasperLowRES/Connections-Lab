@@ -30,20 +30,18 @@ body {
     background-color: rgba(200, 200, 200, 0.8); 
     padding: 20px;
     margin: 20px auto;
-    max-width: 1500px;
+    max-width: 800px;
     border-radius: 8px; 
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
 }
+
 .intro-text {
-    background: white;
     text-align: center;
-    margin: 20px auto;
-    max-width: 800px;
+    margin: 0;
     font-size: 24px;
     line-height: 1.6; 
     padding: 0 10px;
 }
-
 
 .image-gallery {
     display: flex;
@@ -61,7 +59,6 @@ body {
 
 .book-button {
     display: flex;
+    justify-content: center;
     margin: 20px auto;
-    height: auto;
-    width: auto;
 }
