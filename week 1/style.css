@@ -4,10 +4,11 @@
     justify-content: center;
 }
 
-.header-container {
-    width: auto:
-    max-width: 30%;
+.header-container img {
     height: 100px:
+    width: auto:
+    object-fit: cover;
+
 }
 
 .header-text {
@@ -19,8 +20,7 @@
 .image-gallery {
     height: 100px;
     width: auto
-    flex: 1:
-    align-items: center;
-    justify-content: center;
+    object-fit: cover;
+
 }
     
