@@ -1,11 +1,12 @@
 body {
-    padding: 200px;
+    padding: 30px;
 }
 
 .header-container {
     display: flex;
     align-items: center;
     justify-content: center;
+    margin: 20px 0:
 }
 
 .header-container img {
