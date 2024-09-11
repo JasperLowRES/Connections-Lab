@@ -1,5 +1,6 @@
 body {
-    padding: 30px;
+    padding: 0px 30px;
+    background-image: url('background.jpg')
 }
 
 .header-container {
