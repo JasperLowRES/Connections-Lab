@@ -5,9 +5,9 @@
 }
 
 .header-container {
-    width: 30%:
+    width: auto:
     max-width: 30%;
-    height: auto:
+    height: 100px:
 }
 
 .header-text {
