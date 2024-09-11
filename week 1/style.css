@@ -28,11 +28,10 @@ body {
 
 .paragraph-container {
     background-color: rgba(200, 200, 200, 0.8); 
-    padding: 20px;
-    margin: 20px auto;
+    padding: 30px;
+    margin: 30px auto;
     max-width: 800px;
     border-radius: 8px; 
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
 }
 
 .intro-text {
@@ -40,14 +39,14 @@ body {
     margin: 0;
     font-size: 24px;
     line-height: 1.6; 
-    padding: 0 10px;
+    padding: 0 30px;
 }
 
 .image-gallery {
     display: flex;
     gap: 10px; 
     justify-content: center;
-    margin-top: 20px;
+    margin-top: 40px;
 }
 
 .image-gallery img {
@@ -59,6 +58,8 @@ body {
 
 .book-button {
     display: flex;
+    max-width: 300px;
+    height: auto;
     justify-content: center;
     margin: 20px auto;
 }
