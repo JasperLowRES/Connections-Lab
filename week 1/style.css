@@ -26,6 +26,16 @@ body {
     margin: 0;
 }
 
+.intro-text {
+    text-align: center;
+    margin: 20px auto;
+    max-width: 800px;
+    font-size: 18px;
+    line-height: 1.6; 
+    padding: 0 10px;
+}
+
+
 .image-gallery {
     display: flex;
     gap: 10px; 
