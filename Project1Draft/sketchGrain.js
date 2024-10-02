@@ -12,6 +12,7 @@ let sourceFile;
 let audioBuffer; 
 let grainScheduler; 
 let dataLoaded = false; 
+let gridSize = 40;
 
 // Grain parameters
 let minAttack;
@@ -81,8 +82,8 @@ function draw() {
     }
   
     if (!dataLoaded || sortedTimestamps.length === 0) {
-      background(0);
-      fill(255);
+      background(255);
+      fill(100);
       textAlign(CENTER, CENTER);
       textSize(24);
       text('Loading data...', width / 2, height / 2);
@@ -91,7 +92,7 @@ function draw() {
       return;
     }
   
-    background(100);  
+    background(255);  
     drawMap();
   
     
@@ -362,9 +363,17 @@ function draw() {
   
   
   function drawMap() {
-    stroke(255);
+    stroke(100);
     noFill();
     rect(0, 0, width, height);
+    for (let xGrid = 0; xGrid < width; xGrid += gridSize) {
+        for (let yGrid = 0; yGrid < height; yGrid += gridSize ) {
+            stroke (0, 0, 255, 25);
+            strokeWeight (.7);
+            line(xGrid, 0, xGrid, height);
+            line(0, yGrid, width, yGrid);
+        }
+    }
   }
   
   function drawTextFeed() {
