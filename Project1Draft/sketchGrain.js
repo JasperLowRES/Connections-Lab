@@ -29,6 +29,59 @@ let densityParameter = 0.9;
 let numRadiosondes; 
 const MAX_ACTIVE_GRAINS = 20; 
 
+async function loadInitialData() {
+    try {
+      // Fetch the json file containing the cached radiosonde data
+      const response = await fetch('https://jasperlowres.github.io/Connections-Lab/Project1Draft/radiosondeDataPreview.json');  // Replace with actual file path
+      if (!response.ok) {
+        throw new Error(`Failed to load initial data: ${response.status}`);
+      }
+  
+      radiosondes = await response.json();  // Parse the JSON directly
+      console.log("Loaded initial radiosonde data from JSON:", radiosondes);
+      
+      // Populate timestamps and set dataLoaded to true
+      populateTimestampsFromRadiosondes();
+      dataLoaded = true;  // Mark data as loaded from the file
+  
+    } catch (error) {
+      console.error("Error loading initial data:", error);
+    }
+  }
+  
+  // Fetch radiosonde data from SondeHub API and update timestamps
+  async function fetchRadiosondeData() {
+    try {
+      const response = await fetch('https://api.allorigins.win/get?url=https://api.v2.sondehub.org/sondes/telemetry?duration=12h');
+      console.log("Attempting to fetch data");
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      radiosondes = JSON.parse(data.contents);
+      console.log("Updated radiosonde data from API:", radiosondes);
+  
+      // Re-populate timestamps and radiosonde count after fetching new data
+      populateTimestampsFromRadiosondes();
+    } catch (error) {
+      console.error("Error fetching radiosonde data:", error);
+    }
+  }
+  
+  // Populate timestamps based on radiosondes data
+  function populateTimestampsFromRadiosondes() {
+    let allTimestamps = new Set();
+    for (let sondeID in radiosondes) {
+      for (let timestamp in radiosondes[sondeID]) {
+        allTimestamps.add(timestamp);
+      }
+    }
+    sortedTimestamps = Array.from(allTimestamps).sort();
+    numRadiosondes = Object.keys(radiosondes).length;
+    timeSlider.attribute('max', sortedTimestamps.length - 1);
+  }
+
 function preload() {
   sourceFile = loadSound('https://jasperlowres.github.io/Connections-Lab/Project1Draft/upupandaway.mp3', soundLoaded, loadError);
 }
@@ -49,6 +102,12 @@ function setup() {
 
   context = getAudioContext(); 
 
+  loadInitialData().then(() => {
+    // After loading the initial data, fetch new data from the API
+    fetchRadiosondeData();
+    setInterval(fetchRadiosondeData, fetchInterval); 
+  });
+
   startButton = createButton('Play');
   startButton.position(10, 10);
   startButton.mousePressed(toggleAudio);  
@@ -67,8 +126,6 @@ function setup() {
   minRelease = 0.1;
   maxRelease = 1.2;
 
-  fetchRadiosondeData(); 
-  setInterval(fetchRadiosondeData, fetchInterval); 
 }
 
 function draw() {
@@ -149,35 +206,35 @@ function draw() {
   }
   
   // Fetch radiosonde data from SondeHub API and update timestamps
-  async function fetchRadiosondeData() {
-    try {
-      const response = await fetch('https://api.allorigins.win/get?url=https://api.v2.sondehub.org/sondes/telemetry?duration=12h');
-      console.log("Attempting to fetch data");
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
+//   async function fetchRadiosondeData() {
+//     try {
+//       const response = await fetch('https://api.allorigins.win/get?url=https://api.v2.sondehub.org/sondes/telemetry?duration=12h');
+//       console.log("Attempting to fetch data");
+//       if (!response.ok) {
+//         throw new Error(`HTTP error! Status: ${response.status}`);
+//       }
   
-      const data = await response.json();
-      radiosondes = JSON.parse(data.contents);
-      console.log("Updated Radiosonde Data:", radiosondes);
+//       const data = await response.json();
+//       radiosondes = JSON.parse(data.contents);
+//       console.log("Updated Radiosonde Data:", radiosondes);
   
-      // Collect and sort unique timestamps from all radiosondes
-      let allTimestamps = new Set();
-      for (let sondeID in radiosondes) {
-        for (let timestamp in radiosondes[sondeID]) {
-          allTimestamps.add(timestamp);  
-        }
-      }
-      sortedTimestamps = Array.from(allTimestamps).sort();  
-      numRadiosondes = Object.keys(radiosondes).length;
-      timeSlider.attribute('max', sortedTimestamps.length - 1);  
+//       // Collect and sort unique timestamps from all radiosondes
+//       let allTimestamps = new Set();
+//       for (let sondeID in radiosondes) {
+//         for (let timestamp in radiosondes[sondeID]) {
+//           allTimestamps.add(timestamp);  
+//         }
+//       }
+//       sortedTimestamps = Array.from(allTimestamps).sort();  
+//       numRadiosondes = Object.keys(radiosondes).length;
+//       timeSlider.attribute('max', sortedTimestamps.length - 1);  
   
-      dataLoaded = true;
+//       dataLoaded = true;
   
-    } catch (error) {
-      console.error('Error fetching radiosonde data:', error);
-    }
-  }
+//     } catch (error) {
+//       console.error('Error fetching radiosonde data:', error);
+//     }
+//   }
   
   function onSliderInput() {
     let sliderValue = timeSlider.value();
