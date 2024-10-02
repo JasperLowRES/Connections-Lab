@@ -185,7 +185,7 @@ function draw() {
         drawingContext.filter = `blur(${blurValue}px)`;
   
         if (grains.some(g => g.sondeID === sondeID && g.isPlaying)) {
-          drawingContext.filter = none;
+          drawingContext.filter = 'none';
           strokeWeight(.7);
           stroke(0);
           fill(255); 
