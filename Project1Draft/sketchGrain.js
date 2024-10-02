@@ -185,13 +185,13 @@ function draw() {
         drawingContext.filter = `blur(${blurValue}px)`;
   
         if (grains.some(g => g.sondeID === sondeID && g.isPlaying)) {
-          strokeWeight(1);
-          stroke(255, 255, 0);
+          strokeWeight(.7);
+          stroke(0);
           fill(255); 
         } else {
+          noStroke();
           fill(colorValue);
         }
-        noStroke();
         ellipse(x, y, sizeValue, sizeValue);
   
         textFeed.push(`Lat: ${lat.toFixed(2)}, Lon: ${lon.toFixed(2)}, Alt: ${altitude}m, Temp: ${temp}°C, Humidity: ${humidity}%`);
