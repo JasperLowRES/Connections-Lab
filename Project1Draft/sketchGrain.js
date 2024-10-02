@@ -13,6 +13,7 @@ let audioBuffer;
 let grainScheduler; 
 let dataLoaded = false; 
 let gridSize = 40;
+let reverbIR;
 
 // Grain parameters
 let minAttack;
@@ -31,25 +32,22 @@ const MAX_ACTIVE_GRAINS = 20;
 
 async function loadInitialData() {
     try {
-      // Fetch the json file containing the cached radiosonde data
       const response = await fetch('https://jasperlowres.github.io/Connections-Lab/Project1Draft/radiosondeDataPreview.json');  // Replace with actual file path
       if (!response.ok) {
         throw new Error(`Failed to load initial data: ${response.status}`);
       }
   
-      radiosondes = await response.json();  // Parse the JSON directly
+      radiosondes = await response.json();  
       console.log("Loaded initial radiosonde data from JSON:", radiosondes);
       
-      // Populate timestamps and set dataLoaded to true
       populateTimestampsFromRadiosondes();
-      dataLoaded = true;  // Mark data as loaded from the file
+      dataLoaded = true;  
   
     } catch (error) {
       console.error("Error loading initial data:", error);
     }
   }
   
-  // Fetch radiosonde data from SondeHub API and update timestamps
   async function fetchRadiosondeData() {
     try {
       const response = await fetch('https://api.allorigins.win/get?url=https://api.v2.sondehub.org/sondes/telemetry?duration=12h');
@@ -62,14 +60,12 @@ async function loadInitialData() {
       radiosondes = JSON.parse(data.contents);
       console.log("Updated radiosonde data from API:", radiosondes);
   
-      // Re-populate timestamps and radiosonde count after fetching new data
       populateTimestampsFromRadiosondes();
     } catch (error) {
       console.error("Error fetching radiosonde data:", error);
     }
   }
   
-  // Populate timestamps based on radiosondes data
   function populateTimestampsFromRadiosondes() {
     let allTimestamps = new Set();
     for (let sondeID in radiosondes) {
@@ -84,6 +80,7 @@ async function loadInitialData() {
 
 function preload() {
   sourceFile = loadSound('https://jasperlowres.github.io/Connections-Lab/Project1Draft/upupandaway.mp3', soundLoaded, loadError);
+  reverbIR = loadSound('https://jasperlowres.github.io/Connections-Lab/Project1Draft/IRx500_01A.wav')
 }
 
 function soundLoaded() {
@@ -103,7 +100,6 @@ function setup() {
   context = getAudioContext(); 
 
   loadInitialData().then(() => {
-    // After loading the initial data, fetch new data from the API
     fetchRadiosondeData();
     setInterval(fetchRadiosondeData, fetchInterval); 
   });
@@ -157,9 +153,7 @@ function draw() {
     let currentTimestamp = sortedTimestamps[currentSliderValue];  
   
     if (currentSliderValue !== previousSliderValue) {
-      // Stop existing grains
       stopAllGrains();
-      // Create new grains for the current radiosondes
       createGrainsForCurrentRadiosondes(currentTimestamp);
       previousSliderValue = currentSliderValue;
     }
@@ -180,7 +174,7 @@ function draw() {
         let tempColor = map(temp, -50, 50, 0, 255);  
         let colorValue = color(0, tempColor, 255 - tempColor);
         let blurValue = map(humidity, 0, 100, 2, 6);  
-        let sizeValue = map(altitude, 0, 40000, 6, 12)
+        let sizeValue = map(altitude, 0, 40000, 6, 14)
   
         drawingContext.filter = `blur(${blurValue}px)`;
   
@@ -206,7 +200,6 @@ function draw() {
    // drawTextFeed(); 
   }
   
-  // Fetch radiosonde data from SondeHub API and update timestamps
 //   async function fetchRadiosondeData() {
 //     try {
 //       const response = await fetch('https://api.allorigins.win/get?url=https://api.v2.sondehub.org/sondes/telemetry?duration=12h');
@@ -248,7 +241,6 @@ function draw() {
       return;
     }
   
-    // Get the radiosondes at the current timestamp
     let currentRadiosondes = [];
     for (let sondeID in radiosondes) {
       let sondeData = radiosondes[sondeID];
@@ -283,19 +275,15 @@ function draw() {
         return;
       }
   
-      // Determine density based on number of radiosondes
       let density = currentRadiosondes.length / numRadiosondes;
       density = constrain(density, 0, 1);
       console.log ("density", density)
   
-      // Adjust grain duration based on density
       let grainDuration = map(density, 0, 1, minGrainDuration, maxGrainDuration);
   
-      // Calculate interval based on density
       let dens = map(density, 1, 0, 0, 1);
       let interval = dens * random(10, 500);
   
-      // Randomly select a radiosonde
       let randomIndex = floor(random(0, currentRadiosondes.length));
       let entry = currentRadiosondes[randomIndex];
   
@@ -303,11 +291,9 @@ function draw() {
         let grain = new Grain(entry, grainDuration, density);
         grains.push(grain);
   
-        // Schedule the next grain
         grainScheduler = setTimeout(scheduleNextGrain, interval);
       } else {
         console.error('Entry is undefined at index:', randomIndex);
-        // Schedule the next grain anyway
         grainScheduler = setTimeout(scheduleNextGrain, interval);
       }
     }
@@ -328,99 +314,115 @@ function draw() {
   
   class Grain {
     constructor(entry, grainDuration, density) {
-      if (!entry || !entry.sondeID) {
-        console.error('Invalid entry provided to Grain:', entry);
-        return;
-      }
-      this.entry = entry;
-      this.sondeID = entry.sondeID;
-      this.isPlaying = true;
-      this.grainDuration = grainDuration;
-  
-      let now = context.currentTime;
+        if (!entry || !entry.sondeID) {
+            console.error('Invalid entry provided to Grain:', entry);
+            return;
+        }
+        this.entry = entry;
+        this.sondeID = entry.sondeID;
+        this.isPlaying = true;
+        this.grainDuration = grainDuration;
+        this.startTime = millis();
 
-      let altitude = entry.alt || 0;
-      let volume = map(altitude, 0, 40000, 0.3, 1)
-      this.amp = volume; 
-      this.source = context.createBufferSource();
-      this.source.buffer = audioBuffer;
-      this.source.playbackRate.value = this.source.playbackRate.value * pitch;
-  
-      // Create gain node
-      this.gainNode = context.createGain();
-      this.source.connect(this.gainNode);
-      this.gainNode.connect(context.destination);
-  
-      // Calculate parameters
-      this.attackTime = map(density, 0, 1, minAttack, maxAttack);
-      this.releaseTime = map(density, 0, 1, minRelease, maxRelease);
-      this.sustainTime = this.grainDuration - this.attackTime - this.releaseTime;
-  
-      if (this.sustainTime < 0) {
-        this.sustainTime = 0.00001; // Ensure positive sustain time
-      }
+        let now = context.currentTime;
 
-      let duration = this.attackTime + this.sustainTime + this.releaseTime;
-  
-      this.randomOffset = map(density, 0, 1, random(-minSpread / 2, minSpread / 2), random(-maxSpread / 2, maxSpread / 2));
-  
-      // Map the slider value to the offset in the audio sample
-      let sampleDuration = audioBuffer.duration;
-      let centralCuePoint = map(timeSlider.value(), 0, sortedTimestamps.length - 1, 0, sampleDuration - duration);
+        let altitude = entry.alt || 0;
+        let volume = map(altitude, 0, 40000, 0.1, 1);
+        this.amp = volume;
 
-      this.offset = centralCuePoint + this.randomOffset;
-      this.offset = constrain(this.offset, 0, sampleDuration - duration);
-  
-      // Start playing the sound
-      this.source.start(now, this.offset, duration);
-  
-      this.gainNode.gain.setValueAtTime(0.0, now); 
-      this.gainNode.gain.linearRampToValueAtTime(this.amp, now + this.attackTime); 
-      this.gainNode.gain.linearRampToValueAtTime(this.amp, now + this.attackTime + this.sustainTime); 
-      this.gainNode.gain.linearRampToValueAtTime(0, now + duration); 
-  
-      this.source.stop(now + duration + 0.01);
-  
-      // Cleanup after grain is done playing
-      setTimeout(() => {
-        this.isPlaying = false;
-        this.gainNode.disconnect();
-        this.source.disconnect();
-      }, (duration + 0.1) * 1000);
+        let filterFreq = map(altitude, 0, 40000, random(500, 5000), 12000);
+        let reverbMix = map(altitude, 0, 40000, 1, 0.5);
+
+        this.source = context.createBufferSource();
+        this.source.buffer = audioBuffer;
+        this.source.playbackRate.value = this.source.playbackRate.value * pitch;
+
+        this.gainNode = context.createGain();
+        this.gainNode.gain.value = this.amp;
+
+        this.filter = context.createBiquadFilter();
+        this.filter.type = 'lowpass';
+        this.filter.frequency.value = filterFreq;
+        this.filter.Q.value = random(5, 10);
+
+        this.reverbNode = context.createConvolver();
+        this.reverbNode.buffer = reverbIR.buffer;
+
+        this.reverbGain = context.createGain();
+        this.reverbGain.gain.value = reverbMix;
+
+        this.source.connect(this.filter);
+        this.filter.connect(this.gainNode);
+        this.gainNode.connect(context.destination);  // Dry signal
+        this.gainNode.connect(this.reverbNode);  // Wet signal
+        this.reverbNode.connect(this.reverbGain);
+        this.reverbGain.connect(context.destination);
+
+        this.attackTime = map(density, 0, 1, minAttack, maxAttack);
+        this.releaseTime = map(density, 0, 1, minRelease, maxRelease);
+        this.sustainTime = this.grainDuration - this.attackTime - this.releaseTime;
+
+        if (this.sustainTime < 0) {
+            this.sustainTime = 0.00001; 
+        }
+
+        let duration = this.attackTime + this.sustainTime + this.releaseTime;
+
+        let sampleDuration = audioBuffer.duration;
+        let centralCuePoint = map(timeSlider.value(), 0, sortedTimestamps.length - 1, 0, sampleDuration - duration);
+        this.offset = centralCuePoint + map(density, 0, 1, random(-minSpread / 2, minSpread / 2), random(-maxSpread / 2, maxSpread / 2));
+        this.offset = constrain(this.offset, 0, sampleDuration - duration);
+
+        this.source.start(now, this.offset, duration);
+
+        this.gainNode.gain.setValueAtTime(0.0, now);
+        this.gainNode.gain.linearRampToValueAtTime(this.amp, now + this.attackTime);
+        this.gainNode.gain.linearRampToValueAtTime(this.amp, now + this.attackTime + this.sustainTime);
+        this.gainNode.gain.linearRampToValueAtTime(0, now + duration);
+
+        this.source.stop(now + duration + 0.01);
+        setTimeout(() => {
+            this.isPlaying = false;
+            this.gainNode.disconnect();
+            this.filter.disconnect();
+            this.reverbGain.disconnect();
+            this.reverbNode.disconnect();
+            this.source.disconnect();
+        }, (duration + 0.1) * 1000);
     }
-  
+
     stop() {
-      // Stop the source
-      if (this.isPlaying) {
-        this.source.stop();
-        this.gainNode.disconnect();
-        this.source.disconnect();
-        this.isPlaying = false;
-      }
+        if (this.isPlaying) {
+            this.source.stop();
+            this.gainNode.disconnect();
+            this.filter.disconnect();
+            this.reverbGain.disconnect();
+            this.reverbNode.disconnect();
+            this.source.disconnect();
+            this.isPlaying = false;
+        }
     }
-  }
+}
+
   
   function toggleAudio() {
     if (!isPlaying) {
       getAudioContext().resume();
       startButton.html('Pause');
-      isPlaying = true;  // Update the state
+      isPlaying = true; 
   
-      // If data is already loaded, start the grain scheduler immediately
       if (dataLoaded && sortedTimestamps.length > 0) {
-        let currentTimestamp = sortedTimestamps[timeSlider.value()];  // Use the current slider value or start at 0
+        let currentTimestamp = sortedTimestamps[timeSlider.value()]; 
         createGrainsForCurrentRadiosondes(currentTimestamp);
       }
   
-      // Force the grains to be created when play is initiated
       previousSliderValue = -1;
     } else {
-      // If playing, stop audio and change the button to 'Play'
-      getAudioContext().suspend();
+
+        getAudioContext().suspend();
       startButton.html('Play');
-      isPlaying = false;  // Update the state
+      isPlaying = false;  
   
-      // Stop all grains
       stopAllGrains();
     }
   }
