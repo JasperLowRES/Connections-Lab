@@ -74,7 +74,7 @@ function setup() {
 function draw() {
     if (!audioBuffer) {
       background(0);
-      fill(255);
+      fill(100);
       textAlign(CENTER, CENTER);
       textSize(24);
       text('Loading audio...', width / 2, height / 2);
