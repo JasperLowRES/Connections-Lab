@@ -388,3 +388,9 @@ function draw() {
     }
   }
   
+  function windowResized() {
+    const newSliderX = windowWidth / 2 - 400;  
+    const newSliderY = height + 60;     
+  
+    timeSlider.position(newSliderX, newSliderY);
+  }
