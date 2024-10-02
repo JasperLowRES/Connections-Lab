@@ -338,7 +338,10 @@ function draw() {
       this.grainDuration = grainDuration;
   
       let now = context.currentTime;
-      this.amp = 0.5; 
+
+      let altitude = entry.alt || 0;
+      let volume = map(altitude, 0, 40000, 0.3, 1)
+      this.amp = volume; 
       this.source = context.createBufferSource();
       this.source.buffer = audioBuffer;
       this.source.playbackRate.value = this.source.playbackRate.value * pitch;
