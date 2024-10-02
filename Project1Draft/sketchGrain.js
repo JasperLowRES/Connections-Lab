@@ -122,12 +122,14 @@ function draw() {
   
         let tempColor = map(temp, -50, 50, 0, 255);  
         let colorValue = color(0, tempColor, 255 - tempColor);
-        let blurValue = map(humidity, 0, 100, 2, 15);  
-        let sizeValue = map(altitude, 0, 40000, 2, 14)
+        let blurValue = map(humidity, 0, 100, 2, 12);  
+        let sizeValue = map(altitude, 0, 40000, 4, 12)
   
         drawingContext.filter = `blur(${blurValue}px)`;
   
         if (grains.some(g => g.sondeID === sondeID && g.isPlaying)) {
+          strokeWeight(.5);
+          stroke(0);
           fill(255); 
         } else {
           fill(colorValue);
@@ -394,3 +396,4 @@ function draw() {
   
     timeSlider.position(newSliderX, newSliderY);
   }
+  
