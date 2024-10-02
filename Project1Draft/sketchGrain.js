@@ -73,7 +73,7 @@ function setup() {
 
 function draw() {
     if (!audioBuffer) {
-      background(0);
+      background(255);
       fill(100);
       textAlign(CENTER, CENTER);
       textSize(24);
@@ -123,6 +123,7 @@ function draw() {
         let tempColor = map(temp, -50, 50, 0, 255);  
         let colorValue = color(0, tempColor, 255 - tempColor);
         let blurValue = map(humidity, 0, 100, 2, 15);  
+        let sizeValue = map(altitude, 0, 40000, 2, 14)
   
         drawingContext.filter = `blur(${blurValue}px)`;
   
@@ -132,7 +133,7 @@ function draw() {
           fill(colorValue);
         }
         noStroke();
-        ellipse(x, y, 10, 10);
+        ellipse(x, y, sizeValue, sizeValue);
   
         textFeed.push(`Lat: ${lat.toFixed(2)}, Lon: ${lon.toFixed(2)}, Alt: ${altitude}m, Temp: ${temp}°C, Humidity: ${humidity}%`);
         if (textFeed.length > 10) {
