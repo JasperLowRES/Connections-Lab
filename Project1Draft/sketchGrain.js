@@ -31,25 +31,22 @@ const MAX_ACTIVE_GRAINS = 20;
 
 async function loadInitialData() {
     try {
-      // Fetch the json file containing the cached radiosonde data
       const response = await fetch('https://jasperlowres.github.io/Connections-Lab/Project1Draft/radiosondeDataPreview.json');  // Replace with actual file path
       if (!response.ok) {
         throw new Error(`Failed to load initial data: ${response.status}`);
       }
   
-      radiosondes = await response.json();  // Parse the JSON directly
+      radiosondes = await response.json();  
       console.log("Loaded initial radiosonde data from JSON:", radiosondes);
       
-      // Populate timestamps and set dataLoaded to true
       populateTimestampsFromRadiosondes();
-      dataLoaded = true;  // Mark data as loaded from the file
+      dataLoaded = true;  
   
     } catch (error) {
       console.error("Error loading initial data:", error);
     }
   }
   
-  // Fetch radiosonde data from SondeHub API and update timestamps
   async function fetchRadiosondeData() {
     try {
       const response = await fetch('https://api.allorigins.win/get?url=https://api.v2.sondehub.org/sondes/telemetry?duration=12h');
@@ -62,14 +59,12 @@ async function loadInitialData() {
       radiosondes = JSON.parse(data.contents);
       console.log("Updated radiosonde data from API:", radiosondes);
   
-      // Re-populate timestamps and radiosonde count after fetching new data
       populateTimestampsFromRadiosondes();
     } catch (error) {
       console.error("Error fetching radiosonde data:", error);
     }
   }
   
-  // Populate timestamps based on radiosondes data
   function populateTimestampsFromRadiosondes() {
     let allTimestamps = new Set();
     for (let sondeID in radiosondes) {
@@ -103,7 +98,6 @@ function setup() {
   context = getAudioContext(); 
 
   loadInitialData().then(() => {
-    // After loading the initial data, fetch new data from the API
     fetchRadiosondeData();
     setInterval(fetchRadiosondeData, fetchInterval); 
   });
