@@ -89,7 +89,7 @@ function soundLoaded() {
 }
 
 function setup() {
-  createCanvas(800, 600);
+  createCanvas(windowWidth*.67, windowHeight*7);
 
   userStartAudio(); 
 
@@ -228,7 +228,7 @@ function draw() {
   
   function onSliderInput() {
     let sliderValue = timeSlider.value();
-    console.log(`Slider changed to: ${sliderValue}`);
+   // console.log(`Slider changed to: ${sliderValue}`);
   }
   
   function createGrainsForCurrentRadiosondes(currentTimestamp) {
@@ -273,7 +273,7 @@ function draw() {
   
       let density = currentRadiosondes.length / numRadiosondes;
       density = constrain(density, 0, 1);
-      console.log ("density", density)
+      //console.log ("density", density)
   
       let grainDuration = map(density, 0, 1, minGrainDuration, maxGrainDuration);
   
@@ -450,6 +450,8 @@ function draw() {
   }
   
   function windowResized() {
+    resizeCanvas(windowWidth*.67, windowHeight*7);
+
     const newSliderX = windowWidth / 2 - 400;  
     const newSliderY = height + 60;     
   
