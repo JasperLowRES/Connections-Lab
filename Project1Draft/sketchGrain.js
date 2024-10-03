@@ -452,6 +452,7 @@ function draw() {
   }
   
   function windowResized() {
+    sketchWidth = windowWidth * .6;
     resizeCanvas(sketchWidth, 600);
 
     const newSliderX = windowWidth / 2 - (sketchWidth / 2);  
