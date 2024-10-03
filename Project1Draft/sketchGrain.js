@@ -13,7 +13,7 @@ let audioBuffer;
 let grainScheduler; 
 let dataLoaded = false; 
 let gridSize = 40;
-let sketchWidth = windowWidth*.6;
+let sketchWidth;
 let reverbIR;
 
 // Grain parameters
@@ -90,6 +90,7 @@ function soundLoaded() {
 }
 
 function setup() {
+  sketchWidth = windowWidth*.6;
   createCanvas(sketchWidth, 600);
 
   userStartAudio(); 
