@@ -454,7 +454,7 @@ function draw() {
   function windowResized() {
     resizeCanvas(sketchWidth, 600);
 
-    const newSliderX = windowWidth / 2 - 400;  
+    const newSliderX = windowWidth / 2 - (sketchWidth / 2);  
     const newSliderY = height + 60;     
   
     timeSlider.position(newSliderX, newSliderY);
