@@ -3,7 +3,7 @@ let grains = [];
 let textFeed = [];     
 let sortedTimestamps = [];  
 let timeSlider;  
-let fetchInterval = 10000; 
+let fetchInterval = 1800000; 
 let isPlaying = false;  
 let startButton;
 let previousSliderValue = -1; 
@@ -32,7 +32,7 @@ const MAX_ACTIVE_GRAINS = 20;
 
 async function loadInitialData() {
     try {
-      const response = await fetch('https://jasperlowres.github.io/Connections-Lab/Project1Draft/radiosondeDataPreview.json');  // Replace with actual file path
+      const response = await fetch('https://jasperlowres.github.io/Connections-Lab/Project1Draft/radiosondeDataPreview.json');  
       if (!response.ok) {
         throw new Error(`Failed to load initial data: ${response.status}`);
       }
@@ -79,17 +79,13 @@ async function loadInitialData() {
   }
 
 function preload() {
-  sourceFile = loadSound('https://jasperlowres.github.io/Connections-Lab/Project1Draft/upupandaway.mp3', soundLoaded, loadError);
+  sourceFile = loadSound('https://jasperlowres.github.io/Connections-Lab/Project1Draft/upupandaway.mp3', soundLoaded);
   reverbIR = loadSound('https://jasperlowres.github.io/Connections-Lab/Project1Draft/IRx500_01A.wav')
 }
 
 function soundLoaded() {
   audioBuffer = sourceFile.buffer;
   console.log('Sound loaded, buffer duration:', audioBuffer.duration);
-}
-
-function loadError(err) {
-  console.error('Failed to load sound:', err);
 }
 
 function setup() {
@@ -110,7 +106,7 @@ function setup() {
 
   // slider for scrubbing through timestamps
   timeSlider = createSlider(0, 0, 0, 1);  
-  timeSlider.position(windowWidth / 2 - 400, 660);
+  timeSlider.position(windowWidth / 2 - 405, 660);
   timeSlider.size(800);
   timeSlider.input(onSliderInput); 
 
@@ -140,8 +136,8 @@ function draw() {
       textAlign(CENTER, CENTER);
       textSize(24);
       text('Loading data...', width / 2, height / 2);
-      textSize(12);
-      text('Fetching a large amount data. This usually takes several minutes, you may want to click away and come back later.', width / 2, height / 2 + 30);
+      //textSize(12);
+     // text('Fetching a large amount data. This usually takes several minutes, you may want to click away and come back later.', width / 2, height / 2 + 30);
       return;
     }
   
