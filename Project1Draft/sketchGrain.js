@@ -13,6 +13,7 @@ let audioBuffer;
 let grainScheduler; 
 let dataLoaded = false; 
 let gridSize = 40;
+let sketchWidth = windowWidth*.6;
 let reverbIR;
 
 // Grain parameters
@@ -89,7 +90,7 @@ function soundLoaded() {
 }
 
 function setup() {
-  createCanvas(windowWidth*.67, 600);
+  createCanvas(sketchWidth, 600);
 
   userStartAudio(); 
 
@@ -106,8 +107,8 @@ function setup() {
 
   // slider for scrubbing through timestamps
   timeSlider = createSlider(0, 0, 0, 1);  
-  timeSlider.position(windowWidth / 2 - 405, 660);
-  timeSlider.size(800);
+  timeSlider.position(windowWidth / 2 - (sketchWidth / 2), 660);
+  timeSlider.size(sketchWidth);
   timeSlider.input(onSliderInput); 
 
   // Initialized grain parameters
@@ -450,7 +451,7 @@ function draw() {
   }
   
   function windowResized() {
-    resizeCanvas(windowWidth*.67, 600);
+    resizeCanvas(sketchWidth, 600);
 
     const newSliderX = windowWidth / 2 - 400;  
     const newSliderY = height + 60;     
