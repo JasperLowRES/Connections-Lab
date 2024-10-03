@@ -89,7 +89,7 @@ function soundLoaded() {
 }
 
 function setup() {
-  createCanvas(windowWidth*.67, windowHeight*7);
+  createCanvas(windowWidth*.67, 600);
 
   userStartAudio(); 
 
@@ -450,7 +450,7 @@ function draw() {
   }
   
   function windowResized() {
-    resizeCanvas(windowWidth*.67, windowHeight*7);
+    resizeCanvas(windowWidth*.67, 600);
 
     const newSliderX = windowWidth / 2 - 400;  
     const newSliderY = height + 60;     
