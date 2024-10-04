@@ -13,11 +13,11 @@ let audioBuffer;
 let grainScheduler; 
 let dataLoaded = false; 
 let apiDataLoaded = false;
+let apiLoadTime = '';
 let gridSize = 40;
 let sketchWidth;
 let reverbIR;
 let loadingStatus = "loading data...";
-let fetchTime;
 
 // Grain parameters
 let minAttack;
@@ -68,7 +68,8 @@ async function loadInitialData() {
   
       populateTimestampsFromRadiosondes();
       apiDataLoaded = true;
-      fetchTime = new Date();
+      let currentDate = new Date();
+      apiLoadTime = currentDate.toLocaleString();
       updateLoadingStatus();
 
     } catch (error) {
@@ -78,7 +79,7 @@ async function loadInitialData() {
 
   function updateLoadingStatus () {
     if (apiDataLoaded) {
-        loadingStatus = 'data loaded, ${fetchTime.toLocaleTimeString()}';
+        loadingStatus = 'data loaded, ${apiLoadTime}';
     } else {
         loadingStatus = "loading data...";
     }
@@ -109,7 +110,7 @@ function soundLoaded() {
 function setup() {
     sketchWidth = windowWidth * 0.6;
     let radiosondeCanvas = createCanvas(sketchWidth, 600);
-    radiosondeCanvas.addClass('radiosondeCanvas');  // Add a class for styling
+    radiosondeCanvas.addClass('radiosondeCanvas');  
 
     userStartAudio(); 
     context = getAudioContext(); 
@@ -236,6 +237,35 @@ function draw() {
    // drawTextFeed(); 
   }
   
+//   async function fetchRadiosondeData() {
+//     try {
+//       const response = await fetch('https://api.allorigins.win/get?url=https://api.v2.sondehub.org/sondes/telemetry?duration=12h');
+//       console.log("Attempting to fetch data");
+//       if (!response.ok) {
+//         throw new Error(`HTTP error! Status: ${response.status}`);
+//       }
+  
+//       const data = await response.json();
+//       radiosondes = JSON.parse(data.contents);
+//       console.log("Updated Radiosonde Data:", radiosondes);
+  
+//       // Collect and sort unique timestamps from all radiosondes
+//       let allTimestamps = new Set();
+//       for (let sondeID in radiosondes) {
+//         for (let timestamp in radiosondes[sondeID]) {
+//           allTimestamps.add(timestamp);  
+//         }
+//       }
+//       sortedTimestamps = Array.from(allTimestamps).sort();  
+//       numRadiosondes = Object.keys(radiosondes).length;
+//       timeSlider.attribute('max', sortedTimestamps.length - 1);  
+  
+//       dataLoaded = true;
+  
+//     } catch (error) {
+//       console.error('Error fetching radiosonde data:', error);
+//     }
+//   }
   
   function onSliderInput() {
     let sliderValue = timeSlider.value();
@@ -472,7 +502,7 @@ function draw() {
     const milestones = ["Ground", "Burj Khalifa", "Mount Everest", "Commercial Jets", "Military Planes", "Stratosphere", "Space"];
 
     p.setup = function () {
-        let canvas = p.createCanvas(250, 380);  
+        let canvas = p.createCanvas(250, 380);  // Increase canvas height to fit the new line
         canvas.parent('legendCanvasContainer');
         p.textAlign(p.CENTER, p.CENTER);
     };
@@ -551,29 +581,31 @@ function draw() {
         // Currently audible section
         p.fill(0);
         p.textSize(10);
-        p.text("Currently Audible", p.width / 2 + 20, topOffset + 270);  
+        p.text("Currently Audible", p.width / 2 + 20, topOffset + 270);  // Adjust position for the final line
         p.noFill();
         p.stroke(0);
         p.strokeWeight(.7);
-        p.ellipse(p.width / 2 - 60, topOffset + 270, 10, 10); 
+        p.ellipse(p.width / 2 - 60, topOffset + 270, 10, 10);  // Draw a circle with black stroke
 
         p.fill(0);
         p.noStroke();
-        p.text("=", p.width / 2 - 35, topOffset + 270);
+        p.text("=", p.width / 2 - 35, topOffset + 270);  // Add equals sign next to the circle
     };
 }
 
 
   
-let legendSketchInstance; 
+let legendSketchInstance; // Declare a variable to track the p5.js instance
+
 function toggleLegend() {
     let legendPopup = document.getElementById('legendPopup');
 
     if (legendPopup.style.display === 'none' || legendPopup.style.display === '') {
         legendPopup.style.display = 'block';
-        legendPopup.style.top = windowHeight / 2 - 140 + 'px'; 
-        legendPopup.style.left = windowWidth / 2 - 125 + 'px';
+        legendPopup.style.top = windowHeight / 2 - 140 + 'px'; // Center vertically
+        legendPopup.style.left = windowWidth / 2 - 125 + 'px'; // Center horizontally
 
+        // Create the p5.js sketch only if it hasn't been created yet
         if (!legendSketchInstance) {
             legendSketchInstance = new p5(legendSketch, 'legendCanvasContainer');
         }
@@ -583,22 +615,25 @@ function toggleLegend() {
 }
   
   
+  // Function to toggle the display of the Info popup
   function toggleInfo() {
     let infoPopup = document.getElementById('infoPopup');
     if (infoPopup.style.display === 'none' || infoPopup.style.display === '') {
       infoPopup.style.display = 'block';
-      infoPopup.style.top = windowHeight / 2 - 100 + 'px'; 
-      infoPopup.style.left = windowWidth / 2 - 125 + 'px'; 
+      infoPopup.style.top = windowHeight / 2 - 100 + 'px'; // Example positioning, adjust as needed
+      infoPopup.style.left = windowWidth / 2 - 125 + 'px'; // Example positioning, adjust as needed
+    } else {
       infoPopup.style.display = 'none';
     }
   }
   
+  // Function to toggle the display of the Credits popup
   function toggleCredits() {
     let creditsPopup = document.getElementById('creditsPopup');
     if (creditsPopup.style.display === 'none' || creditsPopup.style.display === '') {
       creditsPopup.style.display = 'block';
-      creditsPopup.style.top = windowHeight / 2 - 100 + 'px';
-      creditsPopup.style.left = windowWidth / 2 - 125 + 'px'; 
+      creditsPopup.style.top = windowHeight / 2 - 100 + 'px'; // Example positioning, adjust as needed
+      creditsPopup.style.left = windowWidth / 2 - 125 + 'px'; // Example positioning, adjust as needed
     } else {
       creditsPopup.style.display = 'none';
     }
@@ -607,14 +642,17 @@ function toggleLegend() {
   
 
   function windowResized() {
+    // Recalculate sketch width on window resize
     sketchWidth = windowWidth * 0.6;
     resizeCanvas(sketchWidth, 600);
 
-    startButton.position(90, 10);
-    legendButton.position(90, windowHeight - 50);
-    creditsButton.position(windowWidth - 90, windowHeight - 50); 
-    infoButton.position(windowWidth - 90, 10); 
+    // Reposition the buttons based on window size
+    startButton.position(90, 10); // Top left
+    legendButton.position(90, windowHeight - 50); // Bottom left
+    creditsButton.position(windowWidth - 90, windowHeight - 50); // Bottom right
+    infoButton.position(windowWidth - 90, 10); // Top right
 
+    // Reposition the slider
     const newSliderX = windowWidth / 2 - (sketchWidth / 2);
     const newSliderY = height + 60;
     timeSlider.position(newSliderX, newSliderY);
