@@ -12,9 +12,12 @@ let sourceFile;
 let audioBuffer; 
 let grainScheduler; 
 let dataLoaded = false; 
+let apiDataLoaded = false;
 let gridSize = 40;
 let sketchWidth;
 let reverbIR;
+let loadingStatus = "loading data...";
+let fetchTime;
 
 // Grain parameters
 let minAttack;
@@ -27,7 +30,6 @@ let minSpread;
 let maxSpread;
 let pitch = 0.9; 
 let densityParameter = 0.9;
-
 let numRadiosondes; 
 const MAX_ACTIVE_GRAINS = 20; 
 
@@ -43,6 +45,7 @@ async function loadInitialData() {
       
       populateTimestampsFromRadiosondes();
       dataLoaded = true;  
+      updateLoadingStatus();
   
     } catch (error) {
       console.error("Error loading initial data:", error);
@@ -51,6 +54,8 @@ async function loadInitialData() {
   
   async function fetchRadiosondeData() {
     try {
+      apiDataLoaded = false;
+      loadingStatus = "loading data..."
       const response = await fetch('https://api.allorigins.win/get?url=https://api.v2.sondehub.org/sondes/telemetry?duration=12h');
       console.log("Attempting to fetch data");
       if (!response.ok) {
@@ -62,8 +67,20 @@ async function loadInitialData() {
       console.log("Updated radiosonde data from API:", radiosondes);
   
       populateTimestampsFromRadiosondes();
+      apiDataLoaded = true;
+      fetchTime = new Date();
+      updateLoadingStatus();
+
     } catch (error) {
       console.error("Error fetching radiosonde data:", error);
+    }
+  }
+
+  function updateLoadingStatus () {
+    if (apiDataLoaded) {
+        loadingStatus = 'data loaded, ${fetchTime.toLocaleTimeString()}';
+    } else {
+        loadingStatus = "loading data...";
     }
   }
   
@@ -90,35 +107,48 @@ function soundLoaded() {
 }
 
 function setup() {
-  sketchWidth = windowWidth*.6;
-  createCanvas(sketchWidth, 600);
+    sketchWidth = windowWidth * 0.6;
+    let radiosondeCanvas = createCanvas(sketchWidth, 600);
+    radiosondeCanvas.addClass('radiosondeCanvas');  // Add a class for styling
 
-  userStartAudio(); 
+    userStartAudio(); 
+    context = getAudioContext(); 
+    loadInitialData().then(() => {
+        fetchRadiosondeData();
+        setInterval(fetchRadiosondeData, fetchInterval); 
+    });
+  
+    startButton = createButton('Play');
+    startButton.position(20, 10);
+    startButton.mousePressed(toggleAudio);  
+  
+    const legendButton = createButton('Legend');
+    legendButton.position(20, windowHeight - 50);
+    legendButton.mousePressed(toggleLegend);
+  
+    const infoButton = createButton('Info');
+    infoButton.position(windowWidth - 60, 10);
+    infoButton.mousePressed(toggleInfo);
+  
+    const creditsButton = createButton('Credits');
+    creditsButton.position(windowWidth - 70, windowHeight - 50);
+    creditsButton.mousePressed(toggleCredits);
+    
 
-  context = getAudioContext(); 
-
-  loadInitialData().then(() => {
-    fetchRadiosondeData();
-    setInterval(fetchRadiosondeData, fetchInterval); 
-  });
-
-  startButton = createButton('Play');
-  startButton.position(10, 10);
-  startButton.mousePressed(toggleAudio);  
-
-  // slider for scrubbing through timestamps
-  timeSlider = createSlider(0, 0, 0, 1);  
-  timeSlider.position(windowWidth / 2 - (sketchWidth / 2), 660);
-  timeSlider.size(sketchWidth);
-  timeSlider.input(onSliderInput); 
-
+  
+    timeSlider = createSlider(0, 0, 0, 1);  
+    timeSlider.position(windowWidth / 2 - (sketchWidth / 2), 660);
+    timeSlider.size(sketchWidth);
+    timeSlider.input(onSliderInput); 
+  
+  
   // Initialized grain parameters
-  minSpread = 0.9;
-  maxSpread = 10;
-  minAttack = 0.01;
-  maxAttack = 0.3;
-  minRelease = 0.1;
-  maxRelease = 1.2;
+    minSpread = 0.9;
+    maxSpread = 10;
+    minAttack = 0.01;
+    maxAttack = 0.3;
+    minRelease = 0.1;
+    maxRelease = 1.2;
 
 }
 
@@ -142,8 +172,16 @@ function draw() {
      // text('Fetching a large amount data. This usually takes several minutes, you may want to click away and come back later.', width / 2, height / 2 + 30);
       return;
     }
+
+
   
     background(255);  
+
+    textSize(14);
+    fill(0);
+    textAlign(RIGHT, TOP);
+    text(loadingStatus, width - 18, 2);
+
     drawMap();
   
     
@@ -198,35 +236,6 @@ function draw() {
    // drawTextFeed(); 
   }
   
-//   async function fetchRadiosondeData() {
-//     try {
-//       const response = await fetch('https://api.allorigins.win/get?url=https://api.v2.sondehub.org/sondes/telemetry?duration=12h');
-//       console.log("Attempting to fetch data");
-//       if (!response.ok) {
-//         throw new Error(`HTTP error! Status: ${response.status}`);
-//       }
-  
-//       const data = await response.json();
-//       radiosondes = JSON.parse(data.contents);
-//       console.log("Updated Radiosonde Data:", radiosondes);
-  
-//       // Collect and sort unique timestamps from all radiosondes
-//       let allTimestamps = new Set();
-//       for (let sondeID in radiosondes) {
-//         for (let timestamp in radiosondes[sondeID]) {
-//           allTimestamps.add(timestamp);  
-//         }
-//       }
-//       sortedTimestamps = Array.from(allTimestamps).sort();  
-//       numRadiosondes = Object.keys(radiosondes).length;
-//       timeSlider.attribute('max', sortedTimestamps.length - 1);  
-  
-//       dataLoaded = true;
-  
-//     } catch (error) {
-//       console.error('Error fetching radiosonde data:', error);
-//     }
-//   }
   
   function onSliderInput() {
     let sliderValue = timeSlider.value();
@@ -450,13 +459,163 @@ function draw() {
       text(textFeed[i], 10, yPos + i * 15);
     }
   }
-  
-  function windowResized() {
-    resizeCanvas(sketchWidth, 600);
 
-    const newSliderX = windowWidth / 2 - (sketchWidth / 2);  
-    const newSliderY = height + 60;     
+  function legendSketch(p) {
+    const minTemp = 0;
+    const maxTemp = 50;
+    const numCircles = 7;
+
+    const minHumidity = 0;
+    const maxHumidity = 100;
+
+    const altitudes = [0, 828, 8848, 12000, 20000, 30000, 40000];
+    const milestones = ["Ground", "Burj Khalifa", "Mount Everest", "Commercial Jets", "Military Planes", "Stratosphere", "Space"];
+
+    p.setup = function () {
+        let canvas = p.createCanvas(250, 380);  
+        canvas.parent('legendCanvasContainer');
+        p.textAlign(p.CENTER, p.CENTER);
+    };
+
+    p.draw = function () {
+        p.background(255);
+        p.fill(0);
+        p.textSize(9);
+
+        let topOffset = 5;
+
+        // Temperature section
+        p.text("Temperature", p.width / 2, topOffset + 10);
+        let circleYTemp = topOffset + 30;
+        let startX = 20;
+        let circleSpacing = (p.width - startX * 2) / (numCircles - 1);
+        let radius = 10;
+
+        for (let i = 0; i < numCircles; i++) {
+            let t = i / (numCircles - 1);
+            let tempColor = p.lerpColor(p.color(0, 0, 255), p.color(0, 255, 0), t);
+
+            p.fill(tempColor);
+            p.noStroke();
+            p.ellipse(startX + i * circleSpacing, circleYTemp, radius, radius);
+
+            if (i === 0 || i === numCircles - 1 || i === Math.floor(numCircles / 2)) {
+                p.fill(0);
+                p.text(Math.round(p.map(t, 0, 1, minTemp, maxTemp)) + "°C", startX + i * circleSpacing, circleYTemp + radius + 10);
+            }
+        }
+
+        // Humidity section
+        p.text("Humidity", p.width / 2, topOffset + 75);
+        let circleYHumidity = topOffset + 95;
+
+        for (let i = 0; i < numCircles; i++) {
+            let h = i / (numCircles - 1);
+            let blurValue = p.map(h, 0, 1, 0, 6);
+
+            p.drawingContext.filter = `blur(${blurValue}px)`;
+            p.fill(150);
+            p.ellipse(startX + i * circleSpacing, circleYHumidity, radius, radius);
+            p.drawingContext.filter = 'none';
+
+            if (i === 0 || i === numCircles - 1 || i === Math.floor(numCircles / 2)) {
+                p.fill(0);
+                p.text(Math.round(p.map(h, 0, 1, minHumidity, maxHumidity)) + "%", startX + i * circleSpacing, circleYHumidity + radius + 10);
+            }
+        }
+
+        // Altitude section
+        p.text("Altitude", p.width / 2, topOffset + 140);
+        let circleYAltitude = topOffset + 160;
+
+        for (let i = 0; i < altitudes.length; i++) {
+            let alt = altitudes[i];
+            let circleSize = p.map(alt, 0, 40000, 6, 14);
+
+            p.fill(100);
+            p.noStroke();
+            p.ellipse(startX + i * circleSpacing, circleYAltitude, circleSize, circleSize);
+
+            p.fill(0);
+            p.textSize(8);
+            p.text(alt + "m", startX + i * circleSpacing, circleYAltitude + circleSize + 10);
+
+            p.push();
+            p.translate(startX + i * circleSpacing, circleYAltitude + circleSize + 50);
+            p.rotate(p.radians(90));
+            p.textSize(8);
+            p.text(milestones[i], 0, 0);
+            p.pop();
+        }
+
+        // Currently audible section
+        p.fill(0);
+        p.textSize(10);
+        p.text("Currently Audible", p.width / 2 + 20, topOffset + 270);  
+        p.noFill();
+        p.stroke(0);
+        p.strokeWeight(.7);
+        p.ellipse(p.width / 2 - 60, topOffset + 270, 10, 10); 
+
+        p.fill(0);
+        p.noStroke();
+        p.text("=", p.width / 2 - 35, topOffset + 270);
+    };
+}
+
+
   
-    timeSlider.position(newSliderX, newSliderY);
+let legendSketchInstance; 
+function toggleLegend() {
+    let legendPopup = document.getElementById('legendPopup');
+
+    if (legendPopup.style.display === 'none' || legendPopup.style.display === '') {
+        legendPopup.style.display = 'block';
+        legendPopup.style.top = windowHeight / 2 - 140 + 'px'; 
+        legendPopup.style.left = windowWidth / 2 - 125 + 'px';
+
+        if (!legendSketchInstance) {
+            legendSketchInstance = new p5(legendSketch, 'legendCanvasContainer');
+        }
+    } else {
+        legendPopup.style.display = 'none';
+    }
+}
+  
+  
+  function toggleInfo() {
+    let infoPopup = document.getElementById('infoPopup');
+    if (infoPopup.style.display === 'none' || infoPopup.style.display === '') {
+      infoPopup.style.display = 'block';
+      infoPopup.style.top = windowHeight / 2 - 100 + 'px'; 
+      infoPopup.style.left = windowWidth / 2 - 125 + 'px'; 
+      infoPopup.style.display = 'none';
+    }
   }
   
+  function toggleCredits() {
+    let creditsPopup = document.getElementById('creditsPopup');
+    if (creditsPopup.style.display === 'none' || creditsPopup.style.display === '') {
+      creditsPopup.style.display = 'block';
+      creditsPopup.style.top = windowHeight / 2 - 100 + 'px';
+      creditsPopup.style.left = windowWidth / 2 - 125 + 'px'; 
+    } else {
+      creditsPopup.style.display = 'none';
+    }
+  }
+  
+  
+
+  function windowResized() {
+    sketchWidth = windowWidth * 0.6;
+    resizeCanvas(sketchWidth, 600);
+
+    startButton.position(90, 10);
+    legendButton.position(90, windowHeight - 50);
+    creditsButton.position(windowWidth - 90, windowHeight - 50); 
+    infoButton.position(windowWidth - 90, 10); 
+
+    const newSliderX = windowWidth / 2 - (sketchWidth / 2);
+    const newSliderY = height + 60;
+    timeSlider.position(newSliderX, newSliderY);
+}
