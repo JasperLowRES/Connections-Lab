@@ -2,25 +2,43 @@ body {
     font-family: Arial, sans-serif;
     text-align: center;
     background-color: #fff;
-    color: #fff;
+    color: #333;
     margin: 0;
     padding: 0;
-  }
-  
-  h1 {
-    margin-top: 20px;
-    font-size: 2em;
-    color: #00ffcc;
-  }
-  
-  #description {
-    margin: 20px;
-    font-size: 1.2em;
-    color: #ccc;
-  }
-  
-  canvas {
+}
+
+.popup {
+    background-color: white;
+    border: 1px solid #ccc;
+    width: 250px;
+    height: 290px; 
+    box-sizing: border-box;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    position: absolute;
+    z-index: 10;
+    overflow: hidden;
+}
+
+#legendPopup {
+    padding: 0;
+}
+
+#infoPopup, #creditsPopup {
+    padding: 10px;  /
+}
+
+#legendCanvasContainer canvas {
+    padding: 0;
+    margin: 0;
     display: block;
-    margin: 50px auto;
-  }
-  
+}
+
+.radiosondeCanvas {
+    display: block;
+    margin: 50px auto;  
+}
+
+canvas {
+    display: block;
+    margin: 0;
+}
