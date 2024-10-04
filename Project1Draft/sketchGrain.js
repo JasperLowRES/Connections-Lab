@@ -178,10 +178,10 @@ function draw() {
   
     background(255);  
 
-    textSize(14);
-    fill(0);
-    textAlign(RIGHT, TOP);
-    text(loadingStatus, width - 18, 2);
+   // textSize(14);
+   // fill(0);
+   // textAlign(RIGHT, TOP);
+   // text(loadingStatus, width - 18, 2);
 
     drawMap();
   
