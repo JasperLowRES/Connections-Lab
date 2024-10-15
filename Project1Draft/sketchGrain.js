@@ -14,6 +14,8 @@ let grainScheduler;
 let dataLoaded = false; 
 let apiDataLoaded = false;
 let apiLoadTime = '';
+let timeLabels = [];
+
 let gridSize = 40;
 let sketchWidth;
 let reverbIR;
@@ -33,68 +35,313 @@ let densityParameter = 0.9;
 let numRadiosondes; 
 const MAX_ACTIVE_GRAINS = 20; 
 
+let loadingDots = '';
+let dotCount = 0;
+let lastDotTime = 0;
+
+let isLooping = false;
+let loopIntervalId = null;
+
+let dataPoints = []; // Your array of data points
+
+// Assuming you have these variables defined somewhere in your code
+let yourStartTimestamp, yourEndTimestamp;
+
+function setupTimeMarkers() {
+    const markerContainer = document.getElementById('timeMarkers');
+    if (!markerContainer) {
+        console.error('Time markers container not found');
+        return;
+    }
+    markerContainer.innerHTML = ''; // Clear existing markers
+
+    const timeSliderContainer = document.getElementById('timeSlider');
+    if (!timeSliderContainer) {
+        console.error('Time slider container not found');
+        return;
+    }
+
+    // Remove existing balloon icons
+    const existingBalloons = timeSliderContainer.querySelectorAll('.balloon-icon');
+    existingBalloons.forEach(balloon => balloon.remove());
+
+    const specificPositions = [];
+
+    const startTime = new Date(yourStartTimestamp);
+    const endTime = new Date(yourEndTimestamp);
+    let timeRange = endTime - startTime;
+    
+    // Ensure the time range covers 12 hours
+    const twelveHours = 12 * 60 * 60 * 1000; // in milliseconds
+    if (timeRange < twelveHours) {
+        console.warn('Time range is less than 12 hours. Adjusting endTime.');
+        endTime.setTime(startTime.getTime() + twelveHours);
+        timeRange = twelveHours;
+    }
+
+    // Calculate all launch times (00:00 and 12:00 UTC) within the time range
+    const launchTimes = [];
+    const currentDate = new Date(startTime);
+
+    // Set to the start of the day
+    currentDate.setUTCHours(0, 0, 0, 0);
+
+    while (currentDate <= endTime) {
+        // Add 00:00 UTC
+        let launchTime1 = new Date(currentDate);
+        launchTimes.push(new Date(launchTime1));
+
+        // Add 12:00 UTC
+        let launchTime2 = new Date(currentDate);
+        launchTime2.setUTCHours(12);
+        launchTimes.push(new Date(launchTime2));
+
+        // Move to the next day
+        currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+    }
+
+    // Filter launchTimes within startTime and endTime
+    const validLaunchTimes = launchTimes.filter(launchTime => launchTime >= startTime && launchTime <= endTime);
+
+    validLaunchTimes.forEach((utcTime) => {
+        // Calculate the relative position (0 to 1)
+        const position = (utcTime - startTime) / timeRange;
+        const percentage = position * 100;
+
+        // Store specific marker positions
+        specificPositions.push(percentage);
+
+        // Create time marker
+        const marker = document.createElement('div');
+        marker.classList.add('time-marker');
+        marker.style.left = `${percentage}%`;
+
+        // Create marker line
+        const markerLine = document.createElement('div');
+        markerLine.classList.add('marker-line');
+        marker.appendChild(markerLine);
+
+        // Create marker time label in UTC format
+        const markerTime = document.createElement('div');
+        markerTime.classList.add('marker-time');
+        markerTime.textContent = formatUTCTime(utcTime.getTime()); // Formats to hh:mm UTC
+        marker.appendChild(markerTime);
+
+        // Append marker to container
+        markerContainer.appendChild(marker);
+
+        // Create balloon icon
+        const balloon = document.createElement('div');
+        balloon.classList.add('balloon-icon');
+        balloon.style.left = `${percentage}%`;
+        balloon.innerHTML = '🎈';
+        balloon.setAttribute('aria-hidden', 'true'); // Accessibility
+
+        // Append balloon to timeSlider container
+        timeSliderContainer.appendChild(balloon);
+
+        // Trigger reflow to enable transition and animation
+        requestAnimationFrame(() => {
+            balloon.classList.add('visible');
+        });
+
+        console.log(`Balloon appended at ${percentage}%:`, balloon);
+    });
+
+    // Define the minimum distance (in percentage) between markers to prevent overlap
+    const MIN_DISTANCE_PERCENT = 2.5; // Adjust as needed
+
+    // Add general time markers (e.g., every hour)
+    const numberOfGeneralMarkers = 12; // 12 markers for 12 hours
+    for (let i = 0; i <= numberOfGeneralMarkers; i++) {
+        const currentTime = new Date(startTime.getTime() + (i * (timeRange / numberOfGeneralMarkers)));
+        const position = (currentTime - startTime) / timeRange;
+        const percentage = position * 100;
+
+        // Check if this general marker is too close to any specific marker
+        const isTooClose = specificPositions.some(specificPos => Math.abs(specificPos - percentage) < MIN_DISTANCE_PERCENT);
+
+        if (isTooClose) {
+            console.log(`Skipping marker at ${percentage}% to prevent overlap with balloon marker.`);
+            continue; // Skip adding this marker
+        }
+
+        // Create time marker
+        const marker = document.createElement('div');
+        marker.classList.add('time-marker');
+        marker.style.left = `${percentage}%`;
+
+        // Create marker line
+        const markerLine = document.createElement('div');
+        markerLine.classList.add('marker-line');
+        marker.appendChild(markerLine);
+
+        // Create marker time label in standard format
+        const markerTime = document.createElement('div');
+        markerTime.classList.add('marker-time');
+        markerTime.textContent = formatTime(currentTime.getTime()); // Formats to hh:mm AM/PM or as per your format
+        marker.appendChild(markerTime);
+
+        // Append marker to container
+        markerContainer.appendChild(marker);
+    }
+}
+
+// Helper function to format time in UTC
+function formatUTCTime(timestamp) {
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) {
+        console.error("Invalid date:", timestamp);
+        return "Invalid Date";
+    }
+    const hours = String(date.getUTCHours()).padStart(2, '0');
+    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+    return `${hours}:${minutes} UTC`;
+}
+
+function formatTime(timestamp) {
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) {
+        console.error("Invalid date:", timestamp);
+        return "Invalid Date";
+    }
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // e.g., "02:00 PM"
+}
+
+// Add this function to format dates
+function formatDate(timestamp) {
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) {
+        console.error("Invalid date:", timestamp);
+        return "Invalid Date";
+    }
+    return date.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' }); // e.g., "Sep 14, 2023"
+}
+
+function updateTimeLabels(startTime, endTime) {
+    const startTimeElement = document.getElementById('startTime');
+    const endTimeElement = document.getElementById('endTime');
+    if (startTimeElement && endTimeElement) {
+        startTimeElement.textContent = formatDateTime(startTime);
+        endTimeElement.textContent = formatDateTime(endTime);
+    }
+}
+
+// Call this function when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    updateTimeLabels(yourStartTimestamp, yourEndTimestamp);
+});
+
+// You might also want to call this function after your data is loaded
+// For example:
+// function onDataLoaded() {
+//     yourStartTimestamp = /* your start time from loaded data */;
+//     yourEndTimestamp = /* your end time from loaded data */;
+//     updateTimeLabels(yourStartTimestamp, yourEndTimestamp);
+// }
+
 async function loadInitialData() {
     try {
-      const response = await fetch('https://jasperlowres.github.io/Connections-Lab/Project1Draft/radiosondeDataPreview.json');  
-      if (!response.ok) {
-        throw new Error(`Failed to load initial data: ${response.status}`);
-      }
-  
-      radiosondes = await response.json();  
-      console.log("Loaded initial radiosonde data from JSON:", radiosondes);
-      
-      populateTimestampsFromRadiosondes();
-      dataLoaded = true;  
-      updateLoadingStatus();
-  
+        const response = await fetch('https://jasperlowres.github.io/Connections-Lab/Project1Draft/radiosondeDataPreview.json');  
+        if (!response.ok) {
+            throw new Error(`Failed to load initial data: ${response.status}`);
+        }
+    
+        radiosondes = await response.json();  
+        console.log("Loaded initial radiosonde data from JSON:", radiosondes);
+        
+        populateTimestampsFromRadiosondes();
+        dataLoaded = true;  
+        updateLoadingStatus();
+        setupTimeMarkers(); // Ensure this is called here
+        
+        // Start fetching data from API
+        fetchRadiosondeData();
     } catch (error) {
-      console.error("Error loading initial data:", error);
+        console.error("Error loading initial data:", error);
     }
-  }
+}
   
   async function fetchRadiosondeData() {
     try {
-      apiDataLoaded = false;
-      loadingStatus = "loading data..."
-      const response = await fetch('https://api.allorigins.win/get?url=https://api.v2.sondehub.org/sondes/telemetry?duration=12h');
-      console.log("Attempting to fetch data");
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-  
-      const data = await response.json();
-      radiosondes = JSON.parse(data.contents);
-      console.log("Updated radiosonde data from API:", radiosondes);
-  
-      populateTimestampsFromRadiosondes();
-      apiDataLoaded = true;
-      let currentDate = new Date();
-      apiLoadTime = currentDate.toLocaleString();
-      updateLoadingStatus();
+        apiDataLoaded = false;
+        loadingStatus = "loading data..."
+        const response = await fetch('https://api.allorigins.win/get?url=https://api.v2.sondehub.org/sondes/telemetry?duration=12h');
+        console.log("Attempting to fetch data");
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        radiosondes = JSON.parse(data.contents);
+        console.log("Updated radiosonde data from API:", radiosondes);
+
+        populateTimestampsFromRadiosondes();
+        apiDataLoaded = true;
+        
+        // Store apiLoadTime as a timestamp
+        apiLoadTime = Date.now(); 
+        updateLoadingStatus();
+
+        // **Call setupTimeMarkers to update balloon positions**
+        setupTimeMarkers();
 
     } catch (error) {
-      console.error("Error fetching radiosonde data:", error);
+        console.error("Error fetching radiosonde data:", error);
     }
-  }
+}
 
-  function updateLoadingStatus () {
-    if (apiDataLoaded) {
-        loadingStatus = 'data loaded, ${apiLoadTime}';
+  function updateLoadingStatus() {
+    const statusIndicator = document.getElementById('statusIndicator');
+    if (!statusIndicator) return;
+
+    if (!dataLoaded) {
+        loadingStatus = "Loading most recent data";
+    } else if (!apiDataLoaded) {
+        loadingStatus = "Loading most recent data";
     } else {
-        loadingStatus = "loading data...";
+        const nextUpdateTime = apiLoadTime + fetchInterval;
+        const timeUntilNextUpdate = Math.max(0, Math.floor((nextUpdateTime - Date.now()) / 60000));
+        loadingStatus = `Data loaded, updating in ${timeUntilNextUpdate} mins`;
     }
-  }
+
+    statusIndicator.textContent = loadingStatus;
+}
   
   function populateTimestampsFromRadiosondes() {
     let allTimestamps = new Set();
     for (let sondeID in radiosondes) {
-      for (let timestamp in radiosondes[sondeID]) {
-        allTimestamps.add(timestamp);
-      }
+        for (let timestamp in radiosondes[sondeID]) {
+            allTimestamps.add(timestamp);
+        }
     }
     sortedTimestamps = Array.from(allTimestamps).sort();
+
+    // Ensure sortedTimestamps covers at least 12 hours
+    if (sortedTimestamps.length < 2) {
+        console.error("Not enough timestamps to cover 12 hours.");
+        return;
+    }
+
     numRadiosondes = Object.keys(radiosondes).length;
     timeSlider.attribute('max', sortedTimestamps.length - 1);
+
+    // Set start and end timestamps to cover 12 hours
+    yourStartTimestamp = sortedTimestamps[0];
+    yourEndTimestamp = new Date(new Date(yourStartTimestamp).getTime() + 12 * 60 * 60 * 1000).toISOString();
+
+    // Ensure endTimestamp exists in sortedTimestamps
+    if (!sortedTimestamps.includes(yourEndTimestamp)) {
+        sortedTimestamps.push(yourEndTimestamp);
+        sortedTimestamps.sort();
+    }
+
+    // Update time labels after setting timestamps
+    updateTimeLabels(yourStartTimestamp, yourEndTimestamp);
+    
+    // Set dataLoaded to true and update loading status
+    dataLoaded = true;
+    updateLoadingStatus();
   }
 
 function preload() {
@@ -108,10 +355,9 @@ function soundLoaded() {
 }
 
 function setup() {
-    sketchWidth = windowWidth * 0.6;
-    let radiosondeCanvas = createCanvas(sketchWidth, 600);
-    radiosondeCanvas.addClass('radiosondeCanvas');  
-
+    let canvas = createCanvas(windowWidth * 0.6, windowHeight * 0.6);
+    canvas.parent('sketch-holder');
+  
     userStartAudio(); 
     context = getAudioContext(); 
     loadInitialData().then(() => {
@@ -119,31 +365,10 @@ function setup() {
         setInterval(fetchRadiosondeData, fetchInterval); 
     });
   
-    startButton = createButton('Play');
-    startButton.position(20, 10);
-    startButton.mousePressed(toggleAudio);  
+    timeSlider = select('#slider');
+    timeSlider.input(onSliderInput);
   
-    const legendButton = createButton('Legend');
-    legendButton.position(20, windowHeight - 50);
-    legendButton.mousePressed(toggleLegend);
-  
-    const infoButton = createButton('Info');
-    infoButton.position(windowWidth - 60, 10);
-    infoButton.mousePressed(toggleInfo);
-  
-    const creditsButton = createButton('Credits');
-    creditsButton.position(windowWidth - 70, windowHeight - 50);
-    creditsButton.mousePressed(toggleCredits);
-    
-
-  
-    timeSlider = createSlider(0, 0, 0, 1);  
-    timeSlider.position(windowWidth / 2 - (sketchWidth / 2), 660);
-    timeSlider.size(sketchWidth);
-    timeSlider.input(onSliderInput); 
-  
-  
-  // Initialized grain parameters
+    // Initialized grain parameters
     minSpread = 0.9;
     maxSpread = 10;
     minAttack = 0.01;
@@ -151,6 +376,10 @@ function setup() {
     minRelease = 0.1;
     maxRelease = 1.2;
 
+    // Initialize other elements if necessary
+
+    // Add interval to update loading status every minute
+    setInterval(updateLoadingStatus, 60000); // 60000 ms = 1 minute
 }
 
 function draw() {
@@ -169,23 +398,13 @@ function draw() {
       textAlign(CENTER, CENTER);
       textSize(24);
       text('Loading data...', width / 2, height / 2);
-      //textSize(12);
-     // text('Fetching a large amount data. This usually takes several minutes, you may want to click away and come back later.', width / 2, height / 2 + 30);
       return;
     }
 
-
-  
     background(255);  
-
-   // textSize(14);
-   // fill(0);
-   // textAlign(RIGHT, TOP);
-   // text(loadingStatus, width - 18, 2);
 
     drawMap();
   
-    
     let currentSliderValue = timeSlider.value();
     let currentTimestamp = sortedTimestamps[currentSliderValue];  
   
@@ -234,16 +453,15 @@ function draw() {
     }
   
     drawingContext.filter = 'none'; 
-   // drawTextFeed(); 
-  }
+    // drawTextFeed(); 
+}
 
-  
-  function onSliderInput() {
+function onSliderInput() {
     let sliderValue = timeSlider.value();
-   // console.log(`Slider changed to: ${sliderValue}`);
-  }
-  
-  function createGrainsForCurrentRadiosondes(currentTimestamp) {
+    // console.log(`Slider changed to: ${sliderValue}`);
+}
+
+function createGrainsForCurrentRadiosondes(currentTimestamp) {
     if (!currentTimestamp) {
       console.error('Current timestamp is undefined');
       return;
@@ -263,9 +481,9 @@ function draw() {
       return;
     }
       scheduleGrains(currentRadiosondes);
-  }
-  
-  function scheduleGrains(currentRadiosondes) {
+}
+
+function scheduleGrains(currentRadiosondes) {
     if (grainScheduler) {
       clearTimeout(grainScheduler);
     }
@@ -307,9 +525,9 @@ function draw() {
     }
   
     scheduleNextGrain();
-  }
-  
-  function stopAllGrains() {
+}
+
+function stopAllGrains() {
     if (grains.length > 0) {
       grains.forEach(grain => grain.stop());
       grains = [];
@@ -318,9 +536,9 @@ function draw() {
       clearTimeout(grainScheduler);
       grainScheduler = null;
     }
-  }
-  
-  class Grain {
+}
+
+class Grain {
     constructor(entry, grainDuration, density) {
         if (!entry || !entry.sondeID) {
             console.error('Invalid entry provided to Grain:', entry);
@@ -412,31 +630,28 @@ function draw() {
     }
 }
 
-  
-  function toggleAudio() {
+function toggleAudio() {
     if (!isPlaying) {
       getAudioContext().resume();
-      startButton.html('Pause');
-      isPlaying = true; 
-  
+      select('.top-buttons button:first-child').html('Pause');
+      isPlaying = true;
+      
       if (dataLoaded && sortedTimestamps.length > 0) {
-        let currentTimestamp = sortedTimestamps[timeSlider.value()]; 
+        let currentTimestamp = sortedTimestamps[timeSlider.value()];
         createGrainsForCurrentRadiosondes(currentTimestamp);
       }
-  
+      
       previousSliderValue = -1;
     } else {
-
-        getAudioContext().suspend();
-      startButton.html('Play');
-      isPlaying = false;  
-  
+      getAudioContext().suspend();
+      select('.top-buttons button:first-child').html('Play');
+      isPlaying = false;
+      
       stopAllGrains();
     }
-  }
-  
-  
-  function drawMap() {
+}
+
+function drawMap() {
     stroke(100);
     noFill();
     rect(0, 0, width, height);
@@ -448,175 +663,270 @@ function draw() {
             line(0, yGrid, width, yGrid);
         }
     }
-  }
-  
-  function drawTextFeed() {
+}
+
+function drawTextFeed() {
     fill(255);            
     textAlign(LEFT);      
     textSize(12);        
     let yPos = 20;    
-  
+
     for (let i = 0; i < textFeed.length; i++) {
       text(textFeed[i], 10, yPos + i * 15);
     }
-  }
+}
 
-  function legendSketch(p) {
-    const minTemp = 0;
-    const maxTemp = 50;
-    const numCircles = 7;
+function legendSketch(p) {
+  const minTemp = 0;
+  const maxTemp = 50;
+  const numCircles = 7;
 
-    const minHumidity = 0;
-    const maxHumidity = 100;
+  const minHumidity = 0;
+  const maxHumidity = 100;
 
-    const altitudes = [0, 828, 8848, 12000, 20000, 30000, 40000];
-    const milestones = ["Ground", "Burj Khalifa", "Mount Everest", "Commercial Jets", "Military Planes", "Stratosphere", "Space"];
+  const altitudes = [0, 828, 8848, 12000, 20000, 30000, 40000];
+  const milestones = ["Ground", "Burj Khalifa", "Mount Everest", "Commercial Jets", "Military Planes", "Stratosphere", "Space"];
 
-    p.setup = function () {
-        let canvas = p.createCanvas(250, 380);  
-        canvas.parent('legendCanvasContainer');
-        p.textAlign(p.CENTER, p.CENTER);
-    };
+  p.setup = function () {
+      let canvas = p.createCanvas(250, 280);  
+      canvas.parent('legendCanvasContainer');
+      p.textAlign(p.CENTER, p.CENTER);
+  };
 
-    p.draw = function () {
-        p.background(255);
-        p.fill(0);
-        p.textSize(9);
+  p.draw = function () {
+      p.background(255);
+      p.fill(0);
+      p.textSize(9);
 
-        let topOffset = 5;
+      let topOffset = 5;
 
-        // Temperature section
-        p.text("Temperature", p.width / 2, topOffset + 10);
-        let circleYTemp = topOffset + 30;
-        let startX = 20;
-        let circleSpacing = (p.width - startX * 2) / (numCircles - 1);
-        let radius = 10;
+      // Temperature section
+      p.text("Temperature", p.width / 2, topOffset + 10);
+      let circleYTemp = topOffset + 30;
+      let startX = 20;
+      let circleSpacing = (p.width - startX * 2) / (numCircles - 1);
+      let radius = 10;
 
-        for (let i = 0; i < numCircles; i++) {
-            let t = i / (numCircles - 1);
-            let tempColor = p.lerpColor(p.color(0, 0, 255), p.color(0, 255, 0), t);
+      for (let i = 0; i < numCircles; i++) {
+          let t = i / (numCircles - 1);
+          let tempColor = p.lerpColor(p.color(0, 0, 255), p.color(0, 255, 0), t);
 
-            p.fill(tempColor);
-            p.noStroke();
-            p.ellipse(startX + i * circleSpacing, circleYTemp, radius, radius);
+          p.fill(tempColor);
+          p.noStroke();
+          p.ellipse(startX + i * circleSpacing, circleYTemp, radius, radius);
 
-            if (i === 0 || i === numCircles - 1 || i === Math.floor(numCircles / 2)) {
-                p.fill(0);
-                p.text(Math.round(p.map(t, 0, 1, minTemp, maxTemp)) + "°C", startX + i * circleSpacing, circleYTemp + radius + 10);
-            }
-        }
+          if (i === 0 || i === numCircles - 1 || i === Math.floor(numCircles / 2)) {
+              p.fill(0);
+              p.text(Math.round(p.map(t, 0, 1, minTemp, maxTemp)) + "°C", startX + i * circleSpacing, circleYTemp + radius + 10);
+          }
+      }
 
-        // Humidity section
-        p.text("Humidity", p.width / 2, topOffset + 75);
-        let circleYHumidity = topOffset + 95;
+      // Humidity section
+      p.text("Humidity", p.width / 2, topOffset + 75);
+      let circleYHumidity = topOffset + 95;
 
-        for (let i = 0; i < numCircles; i++) {
-            let h = i / (numCircles - 1);
-            let blurValue = p.map(h, 0, 1, 0, 6);
+      for (let i = 0; i < numCircles; i++) {
+          let h = i / (numCircles - 1);
+          let blurValue = p.map(h, 0, 1, 0, 6);
 
-            p.drawingContext.filter = `blur(${blurValue}px)`;
-            p.fill(150);
-            p.ellipse(startX + i * circleSpacing, circleYHumidity, radius, radius);
-            p.drawingContext.filter = 'none';
+          p.drawingContext.filter = `blur(${blurValue}px)`;
+          p.fill(150);
+          p.ellipse(startX + i * circleSpacing, circleYHumidity, radius, radius);
+          p.drawingContext.filter = 'none';
 
-            if (i === 0 || i === numCircles - 1 || i === Math.floor(numCircles / 2)) {
-                p.fill(0);
-                p.text(Math.round(p.map(h, 0, 1, minHumidity, maxHumidity)) + "%", startX + i * circleSpacing, circleYHumidity + radius + 10);
-            }
-        }
+          if (i === 0 || i === numCircles - 1 || i === Math.floor(numCircles / 2)) {
+              p.fill(0);
+              p.text(Math.round(p.map(h, 0, 1, minHumidity, maxHumidity)) + "%", startX + i * circleSpacing, circleYHumidity + radius + 10);
+          }
+      }
 
-        // Altitude section
-        p.text("Altitude", p.width / 2, topOffset + 140);
-        let circleYAltitude = topOffset + 160;
+      // Altitude section
+      p.text("Altitude", p.width / 2, topOffset + 140);
+      let circleYAltitude = topOffset + 160;
 
-        for (let i = 0; i < altitudes.length; i++) {
-            let alt = altitudes[i];
-            let circleSize = p.map(alt, 0, 40000, 6, 14);
+      for (let i = 0; i < altitudes.length; i++) {
+          let alt = altitudes[i];
+          let circleSize = p.map(alt, 0, 40000, 6, 14);
 
-            p.fill(100);
-            p.noStroke();
-            p.ellipse(startX + i * circleSpacing, circleYAltitude, circleSize, circleSize);
+          p.fill(100);
+          p.noStroke();
+          p.ellipse(startX + i * circleSpacing, circleYAltitude, circleSize, circleSize);
 
-            p.fill(0);
-            p.textSize(8);
-            p.text(alt + "m", startX + i * circleSpacing, circleYAltitude + circleSize + 10);
+          p.fill(0);
+          p.textSize(8);
+          p.text(alt + "m", startX + i * circleSpacing, circleYAltitude + circleSize + 10);
 
-            p.push();
-            p.translate(startX + i * circleSpacing, circleYAltitude + circleSize + 50);
-            p.rotate(p.radians(90));
-            p.textSize(8);
-            p.text(milestones[i], 0, 0);
-            p.pop();
-        }
+          p.push();
+          p.translate(startX + i * circleSpacing, circleYAltitude + circleSize + 50);
+          p.rotate(p.radians(90));
+          p.textSize(8);
+          p.text(milestones[i], 0, 0);
+          p.pop();
+      }
 
-        // Currently audible section
-        p.fill(0);
-        p.textSize(10);
-        p.text("Currently Audible", p.width / 2 + 20, topOffset + 270);  
-        p.noFill();
-        p.stroke(0);
-        p.strokeWeight(.7);
-        p.ellipse(p.width / 2 - 60, topOffset + 270, 10, 10);  
-
-        p.fill(0);
-        p.noStroke();
-        p.text("=", p.width / 2 - 35, topOffset + 270);  
-    };
+      // Currently audible section
+      p.fill(0);
+      p.textSize(10);
+      p.text("Currently Audible", p.width / 2 - 50, topOffset + 270);  
+      p.noFill();
+      p.stroke(0);
+      p.strokeWeight(.7);
+      p.ellipse(p.width / 2 - 115, topOffset + 270, 10, 10);  
+      p.fill(0);
+      p.noStroke();
+      p.text("=", p.width / 2 - 100, topOffset + 270);  
+      p.text("🎈  =   Global Launch Time", p.width / 2+60, topOffset + 270);  
+      
+  };
 }
 
 
-  
+
 let legendSketchInstance; 
 function toggleLegend() {
-    let legendPopup = document.getElementById('legendPopup');
+  let legendPopup = document.getElementById('legendPopup');
 
-    if (legendPopup.style.display === 'none' || legendPopup.style.display === '') {
-        legendPopup.style.display = 'block';
-        legendPopup.style.top = windowHeight / 2 - 140 + 'px';
-        legendPopup.style.left = windowWidth / 2 - 125 + 'px';
+  if (legendPopup.style.display === 'none' || legendPopup.style.display === '') {
+      legendPopup.style.display = 'block';
+      legendPopup.style.top = windowHeight / 2 - 140 + 'px';
+      legendPopup.style.left = windowWidth / 2 - 125 + 'px';
 
-        if (!legendSketchInstance) {
-            legendSketchInstance = new p5(legendSketch, 'legendCanvasContainer');
-        }
-    } else {
-        legendPopup.style.display = 'none';
-    }
-}
-  
-  
-  function toggleInfo() {
-    let infoPopup = document.getElementById('infoPopup');
-    if (infoPopup.style.display === 'none' || infoPopup.style.display === '') {
-      infoPopup.style.display = 'block';
-      infoPopup.style.top = windowHeight / 2 - 100 + 'px'; 
-      infoPopup.style.left = windowWidth / 2 - 125 + 'px'; 
-    } else {
-      infoPopup.style.display = 'none';
-    }
+      if (!legendSketchInstance) {
+          legendSketchInstance = new p5(legendSketch, 'legendCanvasContainer');
+      }
+  } else {
+      legendPopup.style.display = 'none';
   }
-  
-  function toggleCredits() {
-    let creditsPopup = document.getElementById('creditsPopup');
-    if (creditsPopup.style.display === 'none' || creditsPopup.style.display === '') {
-      creditsPopup.style.display = 'block';
-      creditsPopup.style.top = windowHeight / 2 - 100 + 'px'; 
-      creditsPopup.style.left = windowWidth / 2 - 125 + 'px'; 
-      creditsPopup.style.display = 'none';
-    }
-  }
-  
-  
-
-  function windowResized() {
-    sketchWidth = windowWidth * 0.6;
-    resizeCanvas(sketchWidth, 600);
-
-    startButton.position(90, 10);
-    legendButton.position(90, windowHeight - 50); 
-    creditsButton.position(windowWidth - 90, windowHeight - 50); 
-    infoButton.position(windowWidth - 90, 10);
-
-    const newSliderX = windowWidth / 2 - (sketchWidth / 2);
-    const newSliderY = height + 60;
-    timeSlider.position(newSliderX, newSliderY);
 }
+
+
+function toggleInfo() {
+  let infoPopup = document.getElementById('infoPopup');
+  if (infoPopup.style.display === 'none' || infoPopup.style.display === '') {
+    infoPopup.style.display = 'block';
+    infoPopup.style.top = windowHeight / 2 - 100 + 'px'; 
+    infoPopup.style.left = windowWidth / 2 - 125 + 'px'; 
+  } else {
+    infoPopup.style.display = 'none';
+  }
+}
+
+function toggleCredits() {
+  let creditsPopup = document.getElementById('creditsPopup');
+  if (creditsPopup.style.display === 'none' || creditsPopup.style.display === '') {
+    creditsPopup.style.display = 'block';
+    creditsPopup.style.top = windowHeight / 2 - 100 + 'px'; 
+    creditsPopup.style.left = windowWidth / 2 - 125 + 'px'; 
+  } else {
+    creditsPopup.style.display = 'none';
+  }
+}
+
+
+
+function windowResized() {
+  sketchWidth = windowWidth * 0.6;
+  resizeCanvas(sketchWidth, 600);
+
+  startButton.position(90, 10);
+  legendButton.position(90, windowHeight - 50); 
+  creditsButton.position(windowWidth - 90, windowHeight - 50); 
+  infoButton.position(windowWidth - 90, 10);
+
+  const newSliderX = windowWidth / 2 - (sketchWidth / 2);
+  const newSliderY = height + 60;
+  timeSlider.position(newSliderX, newSliderY);
+}
+
+
+// Call this function whenever your time range changes
+populateTimestampsFromRadiosondes();
+
+// Function to start the loop
+function startLoop() {
+  const speedSlider = select('#speedSlider'); // Using p5.js's select
+  const speed = parseFloat(speedSlider.value()); // p5.Element's value()
+  const interval = 1000 / speed; // Convert speed to interval in milliseconds
+
+  loopIntervalId = setInterval(() => {
+      let currentValue = parseInt(timeSlider.value()); // p5.Element's value()
+      let maxValue = parseInt(timeSlider.attribute('max')); // p5.Element's attribute()
+
+      if (currentValue < maxValue) {
+          timeSlider.value(currentValue + 1);
+      } else {
+          timeSlider.value(0); // Loop back to start
+      }
+
+      onSliderInput(); // Trigger any updates associated with slider input
+  }, interval);
+}
+
+// Function to stop the loop
+function stopLoop() {
+  if (loopIntervalId) {
+      clearInterval(loopIntervalId);
+      loopIntervalId = null;
+  }
+}
+
+// Function to toggle the loop on and off
+function toggleLoop() {
+  const loopButton = document.querySelector('.top-buttons button:nth-child(2)');
+  if (!isLooping) {
+      isLooping = true;
+      loopButton.textContent = 'Stop Loop';
+      startLoop();
+  } else {
+      isLooping = false;
+      loopButton.textContent = 'Loop';
+      stopLoop();
+  }
+}
+
+// Function to update the loop speed based on the speed slider
+function updateLoopSpeed() {
+  if (isLooping) {
+      stopLoop();
+      startLoop();
+  }
+}
+
+// Expose functions to the global scope
+window.toggleLoop = toggleLoop;
+window.updateLoopSpeed = updateLoopSpeed;
+
+class DataPoint {
+  constructor(x, y) {
+      this.x = x;
+      this.y = y;
+      this.size = 5;
+      this.alpha = 255;
+  }
+
+  animate() {
+      this.alpha = 127 + 128 * sin(frameCount * 0.1); // Pulsing effect
+  }
+
+  display() {
+      fill(0, 0, 255, this.alpha);
+      ellipse(this.x, this.y, this.size);
+  }
+}
+
+
+function formatDateTime(timestamp) {
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) {
+        console.error("Invalid date:", timestamp);
+        return "Invalid Date";
+    }
+    return date.toLocaleString([], { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    }); // e.g., "Sep 14, 2023, 02:00 PM"
+}
+
