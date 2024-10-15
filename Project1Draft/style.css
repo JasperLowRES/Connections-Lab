@@ -1,44 +1,196 @@
 body {
+    margin: 0;
+    padding: 20px;
+    background-color: #f0f0f0;
     font-family: Arial, sans-serif;
-    text-align: center;
-    background-color: #fff;
-    color: #333;
-    margin: 0;
-    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
 }
 
-.popup {
-    background-color: white;
-    border: 1px solid #ccc;
-    width: 250px;
-    height: 290px; 
-    box-sizing: border-box;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    position: absolute;
-    z-index: 10;
+#sketch-container {
+    width: 60vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    padding-top: 50px; /* Increased top padding */
+}
+
+#sketch-holder {
+    width: 100%;
+    height: 60vh;
+    background-color: #ffffff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    position: relative;
     overflow: hidden;
-}
-
-#legendPopup {
-    padding: 0;
-}
-
-#infoPopup, #creditsPopup {
-    padding: 10px;  /
-}
-
-#legendCanvasContainer canvas {
-    padding: 0;
-    margin: 0;
-    display: block;
-}
-
-.radiosondeCanvas {
-    display: block;
-    margin: 50px auto;  
 }
 
 canvas {
     display: block;
-    margin: 0;
+}
+
+.popup {
+    display: none;
+    position: absolute;
+    background-color: white;
+    border: 1px solid black;
+    font-size: 11px;
+    padding: 10px;
+    z-index: 100;
+    width: 250px;
+    text-align: center;
+}
+
+.popup button {
+    margin-top: 10px;
+}
+
+#statusIndicator {
+    position: absolute;
+    top: 15px;
+    right: 0px;
+    font-size: 12px; /* Match the size of date timestamps */
+    padding: 5px 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 5px;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+@keyframes ellipsis {
+    0% { content: ''; }
+    33% { content: '.'; }
+    66% { content: '..'; }
+    100% { content: '...'; }
+}
+
+#statusIndicator::after {
+    content: '.';
+    display: inline-block;
+    animation: ellipsis 1.5s infinite;
+    width: 1em;
+    text-align: left;
+}
+
+#timeLabels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: -39px;
+    font-size: 11px;
+}
+
+#timeSlider {
+    width: 100%;
+    margin-top: 25px;
+    position: relative;
+}
+
+#timeSlider input[type="range"] {
+    width: 100%;
+    position: relative;
+    z-index: 2; /* Ensure the slider is above the time markers */
+}
+
+#timeMarkers {
+    position: absolute;
+    top: 2px;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* Time markers below the slider */
+}
+
+.time-marker {
+    position: absolute;
+    width: 1px;
+    height: 10px;
+    background-color: #000;
+    top: 0;
+    pointer-events: none; /* Disable pointer events on entire markers */
+}
+
+.marker-line {
+    width: 1px;
+    height: 15px;
+    background-color: #000;
+    pointer-events: none; /* Disable pointer events on entire markers */
+}
+
+.marker-time {
+    position: absolute;
+    top: 24px; /* Position the time label below the marker line */
+    left: 3px; /* Adjust as needed to center the label */
+    width: 40px; /* Adjust width as needed */
+    font-size: 10px;
+    text-align: center;
+    transform: rotate(60deg); /* Rotated 60 degrees clockwise */
+    transform-origin: top left;
+    white-space: nowrap;
+    pointer-events: none; /* Disable pointer events */
+}
+
+.date-display {
+    position: absolute;
+    bottom: -20px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.top-buttons {
+    position: absolute;
+    top: 10px;
+    left: 0;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.top-right-buttons {
+    position: absolute;
+    top: 10px;
+    right: 250px; /* Adjusted to prevent overlap with status indicator */
+}
+
+.bottom-buttons {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 90px; /* Increased margin to separate from timeSlider */
+    padding-bottom: 20px; /* Adds space below the buttons */
+}
+
+button {
+    padding: 5px 10px;
+}
+
+.balloon-icon {
+    position: absolute;
+    transform: translate(-50%, -100%); /* Center horizontally and position above */
+    font-size: 17px; /* Adjust size as needed */
+    pointer-events: none; /* Allow clicks to pass through */
+    z-index: 3; /* Ensure it's above other elements */
+    opacity: 0; /* Start hidden for animation */
+    transition: opacity 0.5s ease-in-out; /* Smooth fade-in */
+}
+
+.balloon-icon.visible {
+    opacity: 1;
+    animation: floatUpDown 2s ease-in-out infinite; /* Add floating animation */
+}
+
+@keyframes floatUpDown {
+    0% {
+        transform: translate(-50%, calc(-100% + 9px)); /* Original position */
+    }
+    50% {
+        transform: translate(-50%, calc(-100% - 0px)); /* Move up by 5px */
+    }
+    100% {
+        transform: translate(-50%, calc(-100% + 9px)); /* Return to original position */
+    }
 }
