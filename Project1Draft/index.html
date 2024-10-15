@@ -3,27 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Radiosonde Map</title>
+  <title>Radiosonde Sonification</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.min.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="sketch-container">
+        <div class="top-buttons">
+            <button onclick="toggleAudio()">Play</button>
+            <button onclick="toggleLoop()">Loop</button>
+            <input type="range" id="speedSlider" min="5" max="30" step="0.1" value="1" oninput="updateLoopSpeed()">
+            <button onclick="toggleInfo()">Info</button>
+        </div>
+        
+        <div id="statusIndicator">Loading most recent data</div>
+        
+        <div id="sketch-holder">
+            <!-- Canvas will be created here by p5.js -->
+        </div>
+        
+        <div id="timeSlider">
+            <input type="range" min="0" max="100" value="0" id="slider">
+            <div id="timeMarkers"></div>
+            <div id="timeLabels">
+                <div id="startTime">Start Time</div>
+                <div id="endTime">End Time</div>
+            </div>
+        </div>
+        
+        <div class="bottom-buttons">
+            <button onclick="toggleLegend()">Legend</button>
+            <button onclick="toggleCredits()">Credits</button>
+        </div>
+    </div>
 
-    <div id="legendPopup" class="popup" style="display:none;">
-        <div id="legendCanvasContainer"></div> 
-    </div>    
+    <!-- Popups -->
+    <div id="legendPopup" class="popup">
+        <div id="legendCanvasContainer"></div>
+        <button onclick="toggleLegend()">Close</button>
+    </div>
 
-  <div id="infoPopup" class="popup" style="display:none;">
-    <h3>Info</h3>
-    <p>Every day, at 00:00 UTC and 12:00 UTC, weather balloons are simultaneously launched from roughly 900 - 1,300 locations around the world. Irregardless of the geopolitical climate, the balloons are launched day in and day out, and the data they gather is shared amongst all of humanity. </p>
-  </div>
+    <div id="infoPopup" class="popup">
+        <p>This is an interactive sonification of radiosonde data.</p>
+        <button onclick="toggleInfo()">Close</button>
+    </div>
 
-  <div id="creditsPopup" class="popup" style="display:none;">
-    <h3>Credits</h3>
-    <p>Developed by Jasper Hall.<br>Data sourced from SondeHub.<br>Granular engine developed by Michael Phipps<br>Song Used: Up Up and Away by The 5th Dimension<br>Uses the p5 Library developed by the Processing Foundation<br>Developed with the help of Chat GPT-4o and GPT-o1</p>
-  </div>
+    <div id="creditsPopup" class="popup">
+        <p>Created by Jasper Hall</p>
+        <p>Data source: <a href="https://sondehub.org/">Sondehub</a> <a href="https://github.com/projecthorus/sondehub-infra/wiki/API-(Beta)">API</a></p>
+        <p> <a href="https://codepen.io/michaelphipps/pen/RBwbvv">Granular synthesis engine</a> developed by Michael Phipps </p>
+        <p>Song used: <a href="https://www.youtube.com/watch?v=UKkNlwpajNk">Up Up and Away</a> by the 5th Dimension</p>
+        <p> Utilizing the <a href="https://p5js.org/">p5.js</a> library</p>
+        <p> Developed with the help of Claude 3.5 Sonnet, ChatGPT-4o and o1</p>
+        <button onclick="toggleCredits()">Close</button>
+    </div>
 
-  <script src="sketchGrain.js"></script>
+    <div id="currentTime"></div>
+
+    <div id="dateDisplay"></div>
+
+    <script src="sketchGrain.js"></script>
 </body>
 </html>
