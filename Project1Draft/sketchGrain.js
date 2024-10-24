@@ -42,9 +42,8 @@ let lastDotTime = 0;
 let isLooping = false;
 let loopIntervalId = null;
 
-let dataPoints = []; // Your array of data points
+let dataPoints = []; // array of data points
 
-// Assuming you have these variables defined somewhere in your code
 let yourStartTimestamp, yourEndTimestamp;
 
 function setupTimeMarkers() {
@@ -208,7 +207,7 @@ function formatTime(timestamp) {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // e.g., "02:00 PM"
 }
 
-// Add this function to format dates
+// function to format dates
 function formatDate(timestamp) {
     const date = new Date(timestamp);
     if (isNaN(date.getTime())) {
@@ -232,13 +231,6 @@ document.addEventListener('DOMContentLoaded', function() {
     updateTimeLabels(yourStartTimestamp, yourEndTimestamp);
 });
 
-// You might also want to call this function after your data is loaded
-// For example:
-// function onDataLoaded() {
-//     yourStartTimestamp = /* your start time from loaded data */;
-//     yourEndTimestamp = /* your end time from loaded data */;
-//     updateTimeLabels(yourStartTimestamp, yourEndTimestamp);
-// }
 
 async function loadInitialData() {
     try {
@@ -253,7 +245,7 @@ async function loadInitialData() {
         populateTimestampsFromRadiosondes();
         dataLoaded = true;  
         updateLoadingStatus();
-        setupTimeMarkers(); // Ensure this is called here
+        setupTimeMarkers(); 
         
         // Start fetching data from API
         fetchRadiosondeData();
@@ -839,7 +831,6 @@ function windowResized() {
 }
 
 
-// Call this function whenever your time range changes
 populateTimestampsFromRadiosondes();
 
 // Function to start the loop
