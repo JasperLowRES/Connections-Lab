@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🗑️ Virtual Bulletin Board 1.0</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="controls">
+        <button id="add-flier">📌 Post New Flier!</button>
+    </div>
+
+    <div id="flier-modal" class="modal">
+        <div class="modal-content">
+            <h2>✨ Create New Flier ✨</h2>
+            <input type="text" id="flier-title" placeholder="Enter your title here...">
+            <textarea id="flier-body" placeholder="What's on your mind?"></textarea>
+            <div class="image-upload">
+                <label for="flier-image">📷 Add Image (optional):</label>
+                <input type="file" id="flier-image" accept="image/*">
+                <div id="image-preview"></div>
+            </div>
+            <div class="modal-buttons">
+                <button id="submit-flier">📌 Post Flier</button>
+                <button id="cancel-flier">❌ Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bulletin-board"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+</body>
+</html>

@@ -1,0 +1,346 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Courier New", monospace;
+    overflow: hidden;
+    background: #f0f0f0;
+    cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEwAACxMBAJqcGAAAAFFJREFUKJGNkjEOACAIA+n/f9rBwcGBxEFPLxBoAiEMSRcqAOTYvxL0dY8CgZYVYw+wpQ0QxIDCOE/Z9wnAZpO1YRtWF8aYUxXWuY6z/3DbfPoBB5JQJ8x5LN4AAAAASUVORK5CYII='), auto;
+}
+
+#controls {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+}
+
+#add-flier {
+    padding: 10px 20px;
+    background: #000080;
+    color: #ffffff;
+    border: 2px outset #0000ff;
+    font-family: "MS Sans Serif", Arial, sans-serif;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 2px 2px 0 #000;
+    text-shadow: 1px 1px #000;
+}
+
+#add-flier:hover {
+    background: #0000a0;
+}
+
+#add-flier:active {
+    border-style: inset;
+    box-shadow: 1px 1px 0 #000;
+}
+
+#bulletin-board {
+    position: absolute;
+    width: 100000px;
+    height: 100000px;
+    background: #996633;
+    background-image: 
+        linear-gradient(45deg, #8b5e3c 25%, transparent 25%),
+        linear-gradient(-45deg, #8b5e3c 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #8b5e3c 75%),
+        linear-gradient(-45deg, transparent 75%, #8b5e3c 75%);
+    background-size: 20px 20px;
+    transform-origin: 0 0;
+}
+
+.flier {
+    position: absolute;
+    width: 300px;
+    min-height: 200px;
+    transform-origin: center top;
+    pointer-events: all;
+}
+
+.pending-flier {
+    opacity: 0.7;
+    cursor: crosshair;
+}
+
+.flier-content {
+    background: #ffffcc;
+    padding: 20px;
+    border: 2px solid #000;
+    box-shadow: 5px 5px 0 rgba(0,0,0,0.5);
+    position: relative;
+    transform: rotate(-1deg);
+    font-family: "Courier New", monospace;
+}
+
+.flier-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        linear-gradient(45deg, transparent 48%, #ddd 48%, #fff 52%, transparent 52%),
+        linear-gradient(-45deg, transparent 48%, #ddd 48%, #fff 52%, transparent 52%);
+    background-size: 30px 30px;
+    background-position: 0 0, 15px 0;
+    opacity: 0.1;
+    pointer-events: none;
+}
+
+.flier-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    padding-top: 10px;
+}
+
+.delete-flier {
+    background: #ff0000;
+    color: white;
+    border: 2px outset #cc0000;
+    width: 24px;
+    height: 24px;
+    font-size: 18px;
+    line-height: 18px;
+    cursor: pointer;
+    font-family: "MS Sans Serif", Arial, sans-serif;
+}
+
+.delete-flier:hover {
+    background: #cc0000;
+}
+
+.delete-flier:active {
+    border-style: inset;
+}
+
+.thumbtack {
+    width: 20px;
+    height: 20px;
+    background: linear-gradient(45deg, #808080, #c0c0c0);
+    border: 1px solid #404040;
+    border-radius: 50%;
+    position: absolute;
+    left: 50%;
+    top: 10px;
+    transform: translateX(-50%);
+    z-index: 1;
+}
+
+.thumbtack::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #ffffff;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+}
+
+.flier h3 {
+    color: #000080;
+    font-size: 1.2em;
+    text-decoration: underline;
+    font-weight: bold;
+    text-shadow: 1px 1px #fff;
+    font-family: "Courier New", monospace;
+}
+
+.flier p {
+    color: #000;
+    margin-bottom: 15px;
+    line-height: 1.4;
+    font-size: 14px;
+    font-family: "Courier New", monospace;
+}
+
+.flier img {
+    max-width: 100%;
+    margin-top: 10px;
+    border: 2px solid #000;
+    box-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 2000;
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #c0c0c0;
+    padding: 20px;
+    border: 2px outset #ffffff;
+    width: 90%;
+    max-width: 500px;
+}
+
+.modal-content h2 {
+    color: #000080;
+    font-family: "MS Sans Serif", Arial, sans-serif;
+    margin-bottom: 15px;
+    text-align: center;
+    text-shadow: 1px 1px #fff;
+}
+
+.modal-content input,
+.modal-content textarea {
+    width: 100%;
+    padding: 5px;
+    margin: 5px 0;
+    border: 2px inset #ffffff;
+    background: #ffffff;
+    font-family: "Courier New", monospace;
+}
+
+.modal-content textarea {
+    height: 150px;
+    resize: vertical;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 15px;
+}
+
+.modal-buttons button {
+    padding: 5px 15px;
+    border: 2px outset #ffffff;
+    font-family: "MS Sans Serif", Arial, sans-serif;
+    cursor: pointer;
+}
+
+#submit-flier {
+    background: #008000;
+    color: white;
+    text-shadow: 1px 1px #000;
+}
+
+#cancel-flier {
+    background: #ff0000;
+    color: white;
+    text-shadow: 1px 1px #000;
+}
+
+.image-upload {
+    margin: 10px 0;
+}
+
+#image-preview {
+    max-width: 100%;
+    margin-top: 10px;
+    border: 2px inset #ffffff;
+    background: #ffffff;
+    padding: 5px;
+}
+
+#image-preview img {
+    max-width: 100%;
+    max-height: 200px;
+}
+
+#preview-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 150px;
+    height: 150px;
+    background: #c0c0c0;
+    border: 2px outset #ffffff;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+#preview {
+    width: 100%;
+    height: 100%;
+    background: #996633;
+    background-image: 
+        linear-gradient(45deg, #8b5e3c 25%, transparent 25%),
+        linear-gradient(-45deg, #8b5e3c 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #8b5e3c 75%),
+        linear-gradient(-45deg, transparent 75%, #8b5e3c 75%);
+    background-size: 4px 4px;
+    position: relative;
+}
+
+#viewport-indicator {
+    position: absolute;
+    border: 2px solid #00ff00;
+    background: rgba(0, 255, 0, 0.1);
+    pointer-events: none;
+}
+
+.minimap-flier {
+    position: absolute;
+    width: 6px;
+    height: 4px;
+    background: #ffffcc;
+    border: 1px solid #000;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    box-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+}
+
+#visitor-counter {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background: #000080;
+    color: #ffffff;
+    padding: 5px 10px;
+    border: 2px outset #0000ff;
+    font-family: "MS Sans Serif", Arial, sans-serif;
+    font-size: 12px;
+    z-index: 1000;
+    text-shadow: 1px 1px #000;
+}
+
+.counter-text {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Random rotation for fliers */
+.flier:nth-child(2n) .flier-content {
+    transform: rotate(1deg);
+}
+
+.flier:nth-child(3n) .flier-content {
+    transform: rotate(-0.5deg);
+}
+
+.flier:nth-child(5n) .flier-content {
+    transform: rotate(0.5deg);
+}
+
+/* Blinking text effect */
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+.flier h3::after {
+    content: "!";
+    animation: blink 1s infinite;
+}
